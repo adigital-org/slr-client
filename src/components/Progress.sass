@@ -1,0 +1,62 @@
+#progress
+
+  h1
+    text-align: center
+    margin-bottom: 10px
+
+  .progress-body
+    display: flex
+    flex-direction: column
+    justify-content: center
+    align-items: center
+    flex: 0.5
+    width: 100%
+
+  .progress-status
+    width: 65%
+
+  .filename
+    display: flex
+    justify-content: center
+    font-style: italic
+
+  .reset-button
+    flex: 1 1 auto
+    max-width: 20em
+    margin: 5px
+
+  .statics-data
+    margin-left: 30px
+
+  .downloads-bar
+    display: flex
+    justify-content: center
+    align-items: center
+
+    .button-with-text
+      display: flex
+      flex-direction: column
+      justify-content: center
+      align-items: center
+      margin: 0 40px
+      cursor: pointer
+
+      .download-button
+        border: none
+        border-radius: 0
+        width: 50px
+        height: 58px
+
+      .success
+        background: url('../static/icons/download-file.svg') no-repeat
+        background-size: contain
+
+      .fail
+        background: url('../static/icons/download-file.svg') no-repeat
+        background-size: contain
+
+    .downloading
+      display: flex
+      flex-direction: column
+      align-items: center
+      position: absolute

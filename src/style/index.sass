@@ -1,0 +1,188 @@
+@font-face
+  font-family: 'Lato'
+  src: url('../static/fonts/Lato-Regular.ttf')  format('truetype')
+  font-weight: 300
+
+@font-face
+  font-family: 'Lato'
+  src: url('../static/fonts/Lato-Bold.ttf')  format('truetype')
+  font-weight: 700
+
+html
+  background-color: #f6f9fc
+  font-family: sans-serif
+  font-size: 10px
+  height: 100%
+
+body, #root
+  display: flex
+  color: #546576
+  line-height: 1.6
+  flex-direction: column
+  font-family: Lato,Open Sans,sans-serif
+
+body
+  height: 100%
+  margin: 0
+  align-items: center
+  padding: 0
+  font-size: 1.6rem
+
+.content
+  display: flex
+  flex-direction: column
+  flex: 0 0 auto
+  width: 100%
+  max-width: 900px
+  min-height: 600px
+  margin: auto
+
+.card
+  background: #fff
+  box-shadow: 0 7px 18px 0 rgba(83,112,128,.21)
+  border-radius: 6px
+
+h1
+  font-size: 3rem
+  color: #444
+  font-weight: 700
+  margin-top: 0
+  margin-bottom: 10px
+  line-height: 1.1
+
+a
+  display: inline
+  color: #e12c44
+  text-decoration: none
+  &:hover
+    text-decoration: underline
+
+input:not([type]), input[type="text" i], input[type="password" i], input[type="number" i]
+  padding: 6px 12px
+  font-size: 1.5rem
+  line-height: 1.6
+  color: #555
+  background: #fff none
+  border: 1px solid #9da0a3
+  border-radius: 6px
+  box-shadow: none
+
+  &:focus
+    border-color: #2977b3
+    outline: 0
+
+input[type="checkbox" i]
+  margin-right: 10px
+  width: 20px
+  height: 20px
+
+input[type="checkbox" i]:checked:before
+  content: "\2713"
+  color: #fff
+  background-color: #e12c44
+  border: 1px solid hsla(0,0%,100%,0)
+
+input[type=checkbox]:before
+  content: "\A0"
+  width: 20px
+  height: 20px
+  background-color: #fff
+  display: inline-block
+  font: 20px/1em Lato
+  padding: 0
+  text-align: center
+  margin-right: 10px
+  border: 1px solid #9da0a3
+
+button
+  background-color: #e12c44
+  border: 1px solid transparent
+  border-radius: 6px
+  color: #fff
+  width: 165px
+  min-height: 47px
+  line-height: 1.5
+  padding: 5px 10px
+  font-family: inherit //Prevent firefox override
+  font-size: 1.6rem
+  font-weight: 700
+  text-transform: uppercase
+  cursor: pointer
+  user-select: none
+  &:hover
+    color: #fff
+    background-color: #bf1b31
+    border-color: #a01729
+  &:focus
+    color: #fff
+    background-color: #bf1b31
+    border-color: #660e1a
+  &:active
+    color: #fff
+    background-color: #bf1b31
+    border-color: #a01729
+    box-shadow: inset 0 3px 5px rgba(0,0,0,.125)
+
+  &.secondary
+    background-color: #fff
+    border: 1px solid #c92637
+    color: #c92637
+    &:hover
+      background-color: #e6e5e5
+    &:focus
+      background-color: #e6e5e5
+    &:active
+      background-color: #e6e5e5
+      box-shadow: inset 0 3px 5px rgba(0,0,0,.125)
+
+ul.table
+  list-style: none
+  padding: 0
+  margin: 0
+  max-width: 40rem
+  
+  li
+    display: flex
+    justify-content: space-between
+    margin: 10px 0
+
+#root
+  display: flex
+  align-content: center
+  height: 100%
+  width: 100%
+
+.container
+  display: flex
+  flex-direction: column
+  align-items: center
+  width: 100%
+  height: 100%
+
+.box
+  display: flex
+  flex-direction: column
+  flex: 1 1 auto
+  margin: 18px 40px 12px
+
+.hint
+  font-size: 1.4rem
+
+.hidden
+  visibility: hidden
+
+.buttons-bar
+  display: flex
+  flex-wrap: wrap
+  justify-content: center
+  align-items: center
+  margin-top: auto
+
+  button
+    flex: 1 1 auto
+    max-width: 20em
+    margin: 5px 25px
+
+  button.disabled
+    background-color: #e0a6ae
+    cursor: not-allowed

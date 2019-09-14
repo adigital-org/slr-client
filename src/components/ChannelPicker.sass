@@ -1,0 +1,77 @@
+#channel-picker
+  .channels
+    display: flex
+    flex-flow: wrap
+    justify-content: center
+
+
+  button.start.file-type
+    width: 21rem
+    margin: 5px
+
+  //.file-type-disabled
+    //background: #e8b2b9
+    //font-style: italic
+
+  .file-type-selected
+    font-style: italic
+    box-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.5)
+    background-color: #8d0707
+    //&:hover
+      //background-color: #e6e5e5
+    //&:focus
+      //background-color: #e6e5e5
+    //&:active
+      //background-color: #e6e5e5
+      //box-shadow: inset 0 3px 5px rgba(0,0,0,.125)
+
+  .campaign
+    margin-top: 15px
+
+  .campaign-buttons
+    display: flex
+    flex-flow: wrap
+    justify-content: center
+
+  button.start.campaign-type
+    flex: 0 0 auto
+    width: 13rem
+    margin: 5px
+
+
+  //.select
+    position: relative
+
+    .selected
+      background-color: white
+      border: 1px solid black
+      cursor: pointer
+      padding: 5px 8px
+      &:after
+        color: #888
+        content: '\25bc'
+        float: right
+
+    .options
+      display: none
+      background-color: white
+      border: 1px solid #ccc
+      position: absolute
+      top: 30px
+      left: 0
+      right: 0
+
+      .option
+        border-bottom: 1px solid #ccc
+        cursor: pointer
+        padding: 5px 8px
+        &:last-child
+          border-bottom: 0
+        &:hover
+          background-color: #eee
+
+    &:focus
+      .selected:after
+        transform: rotate(180deg)
+      .options
+        display: block
