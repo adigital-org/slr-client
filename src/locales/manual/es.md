@@ -14,7 +14,7 @@ El Cliente API te permite comprobar si los ciudadanos a los que tu empresa va a 
 
 Si tu empresa necesita consultar grandes cantidades de registros en la Lista Robinson, te recomendamos realizar un desarrollo propio (opciones 2 y 3) que permita integrar la consulta en los procesos internos de tu empresa de forma más eficiente.
 
-### 1.3 Cómo funciona
+### 1.2 Cómo funciona
 
 Para utilizar el Cliente API deberás:
 
@@ -31,13 +31,13 @@ El fichero CSV con los datos que deseas consultar deberá:
 
 La separación de las columnas debe ser mediante comas (,) y, opcionalmente, los campos pueden ir entrecomillados por comillas dobles (" ").
 
-### 1.4 Obtener ayuda del Cliente API
+### 1.3 Obtener ayuda del Cliente API
 
 En cada pantalla del Cliente API podrás acceder a la sección de este manual que explica qué debes hacer en ese paso pulsando sobre el botón de ayuda que encontrarás en la parte superior derecha:
 
 ![Icono de ayuda](manual-helpicon.39x38.png "Icono de ayuda")
 
-### 1.5 Requisitos técnicos mínimos para usar el Cliente API
+### 1.4 Requisitos técnicos mínimos para usar el Cliente API
 
 Para utilizar el Cliente API, se recomienda:
 
@@ -80,7 +80,7 @@ Los ficheros compatibles con el Cliente API de Lista Robinson deben:
 -  Los campos deben estar separados por comas y en el orden indicado
 -  Opcionalmente, los campos pueden estar entrecomillados con comillas dobles (" ")
 
-Según el canal a través del que se va a desarrollar la acción publicitaria, el fichero debe contener un tipo de datos u otro, de acuerdo con el Anexo I del Reglamento del Servicio de Lista Robinson y que te resumimos a continuación.
+Según el canal a través del que se va a desarrollar la acción publicitaria, el fichero debe contener un tipo de datos u otro, de acuerdo con el Anexo I del [Reglamento del Servicio de Lista Robinson](https://www.listarobinson.es/reglamento) y que te resumimos a continuación.
 
 Un mismo fichero no puede combinar distintos tipos de datos. Si tienes que consultar varios canales, deberás hacerlo con distintos ficheros para cada canal.
 
@@ -126,6 +126,8 @@ Si tu empresa va a desarrollar acciones publicitarias a través de correo electr
 
 Es importante que el código de provincia se corresponda con la [tabla de códigos de provincia del Instituto Nacional de Estadística](http://www.ine.es/daco/daco42/codmun/cod_provincia.htm), de lo contrario, la consulta arrojará valores erróneos.
 
+Si el domicilio no tiene número de portal, este debe representarse como "sn", en minúsculas. ***No*** serían válidas, por tanto, fórmulas como: "SN", "sin número", "S/N", etc.
+
 Por ejemplo:
 
 ![Ejemplo postal](manual-postal.511x180.png "Ejemplo postal")
@@ -135,6 +137,27 @@ Por ejemplo:
 Si tu empresa dispone del DNI/NIF/NIE de los destinatarios y estos son mayores de 14 años, podrás consultar la Lista Robinson mediante DNI/NIF/NIE. Para ello, el fichero deberá contener únicamente los DNI/NIF/NIE de los destinatarios. Por ejemplo:
 
 ![Ejemplo dni](manual-dninifnie.187x179.png "Ejemplo DNI/NIF/NIE")
+
+Ten en cuenta que los DNI/NIF siempre deberán estar completos, con sus nueve dígitos y su letra final. Los NIE también deberán contener sus ocho dígitos, su letra inicial y su letra final.
+
+Por ejemplo:
+
+-  Serían válidos:
+    -  "12345678A"
+    -  "00012345A"
+    -  "Y0001234A"
+-  ***NO*** serían válidos:
+    -  "12345A"
+    -  "Y1234A"
+
+#### 3.1.5 Opcional: añadir un identificador en cada registro del fichero CSV
+
+Si en tu empresa asignáis internamente identificadores a vuestros clientes, como puede ser un "número de cliente", puedes incluirlo en el fichero CSV a procesar para poder tratar los resultados después de la consulta con mayor facilidad.
+
+Si decides incluirlo en el fichero CSV, el identificador deberá incorporarse siempre en la primera columna y en todos los registros del fichero CSV. Por ejemplo:
+
+![Ejemplo dni](manual-phonefull-w-customfield.501x178.png "Ejemplo teléfono nombres y apellidos con identificador personalizado")
+
 
 ### 3.2 Cómo iniciar el proceso de consulta
 

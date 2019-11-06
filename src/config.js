@@ -19,8 +19,8 @@ export default {
   apiAuthHeaders: false,
 
   maxParallel: 50,
-  maxRetries: 3,
-  retryWait: 30000,
+  maxAttempts: 3,
+  retryWait: 15000,
   workingUiUpdateInterval: 500,
 
   supportedExtensions: ['txt','csv'],

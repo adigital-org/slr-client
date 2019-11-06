@@ -1,5 +1,5 @@
 <?php
-  //READ FAKESERVER_README.md!!
+  //READ SimpleApiSimulator_README.md!!
 
   //TESTED ONLY UNDER PHP 7.0.3 + APACHE
   //Config
@@ -115,9 +115,9 @@
     $url = explode('/', $_SERVER['REQUEST_URI']);
     if ($url[3] === 'user') {
       if (shouldFail()) out(reportError(), 502);
-      else handleUserQuery($url[4]);
+      else handleUserQuery(explode("?", $url[4])[0]);
     }
-    else if ($url[3] === 'requests') {
+    else if (substr($url[3], 0, 8) === 'requests') {
       if (shouldFail()) out(reportError(), 502);
       else handleRequestsQuery();
     }

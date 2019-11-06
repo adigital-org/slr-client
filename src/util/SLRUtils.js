@@ -106,12 +106,16 @@ const normalizers = window.normalizers = {
  */
 export const record2hash = (fields, channel) => {
   const { id, types } = channels[channel]
-  if (fields.length !== types.length) {
-    console.warn('Malformed record:', fields)
+  // Drop company custom field, if any
+  const mFields = [...fields]
+  if (mFields.length === types.length+1) mFields.shift()
+  // Report malformed records
+  if (mFields.length !== types.length) {
+    console.warn('Malformed record: ', fields)
     return null
   }
   // Process each field with the corresponding channel rules
-  const filtered = fields.map((val, i) => normalizers[types[i]](val))
+  const filtered = mFields.map((val, i) => normalizers[types[i]](val))
   const query = id + filtered.join('')
   return SHA256(query).toString()
 }
@@ -122,11 +126,13 @@ export const record2hash = (fields, channel) => {
  * Note that it can guess wrong, or return undefined if no match.
  */
 export const guessChannel = (fields) => {
-  if (fields.length === 7) return 'Postal'
-  if (fields.length === 4) return 'PhoneFull' // or SmsFull
-  if (fields.length === 1) {
-    if (fields[0].indexOf('@') !== -1) return 'Email'
-    if (fields[0].match(/^([a-zA-Z][0-9]{7}|[0-9]{8})[a-zA-Z]$/)) return 'DNI_NIF_NIE'
+  const mFields = [...fields]
+  if (mFields.length === 8 || mFields.length === 5 || mFields.length === 2) mFields.shift()
+  if (mFields.length === 7) return 'Postal'
+  if (mFields.length === 4) return 'PhoneFull' // or SmsFull
+  if (mFields.length === 1) {
+    if (mFields[0].indexOf('@') !== -1) return 'Email'
+    if (mFields[0].match(/^([a-zA-Z][0-9]{7}|[0-9]{8})[a-zA-Z]$/)) return 'DNI_NIF_NIE'
     return 'PhoneSimple' // or SmsSimple
   }
 }

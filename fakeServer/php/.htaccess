@@ -1,3 +1,0 @@
-RewriteEngine on
-RewriteCond %{REQUEST_URI} !credentialsSimulator.php
-RewriteRule ^(.*) fakeServer.php?url=$1 [L,QSA]

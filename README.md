@@ -10,7 +10,7 @@ Usage
 
 This project uses Create React App, so check their documentation for a guide.
 
-*TR;DR*: just clone the repo, install dependencies with `yarn`, and start it with `yarn start`.
+*TL;DR*: just clone the repo, install dependencies with `yarn`, and start it with `yarn start`.
 
 Developers guide
 ----------------
