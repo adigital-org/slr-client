@@ -1,51 +1,84 @@
 <?php
-  //READ SimpleApiSimulator_README.md!!
+  //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  //!! READ SimpleApiSimulator_README.md !!
+  //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
   //TESTED ONLY UNDER PHP 7.0.3 + APACHE
   //Config
-  $GLOBALS['MIN_DELAY'] = 40; //milliseconds
-  $GLOBALS['MAX_DELAY'] = 120; //milliseconds
-  $GLOBALS['ERROR_PROB'] = 0; //0 to 100 (%). Default 0.
+  $GLOBALS['MIN_DELAY'] = 60; //milliseconds
+  $GLOBALS['MAX_DELAY'] = 200; //milliseconds
   $GLOBALS['FOUND_PROB'] = 50; //0 to 100 (%). Default 50.
+  $GLOBALS['ERROR_PROB'] = 10; //0 to 100 (%). Default 10.
+  $GLOBALS['ERROR_PROB_429'] = 25; //0 to 100 (%). Default 25.
 
+  $GLOBALS['MAX_HASHES_PER_REQUEST'] = 20;
   $GLOBALS["SECRET"] = '85e6959915cc2d88b23b9f13c03f3b2b7d498db444a06d8a94a695c4e01e3228';
   $GLOBALS["SECTORS"] = ['1','2','3','4','5','6','7','8','9'];
-
-  //Set CORS headers allowing all origins
-  header('Access-Control-Allow-Origin: *');
-  header('Access-Control-Allow-Methods: OPTIONS, GET');
-  header('Access-Control-Allow-Headers: Authorization, X-Amz-Date');
-
-	//Handle OPTIONS request
-	if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-		exit;
-	}
 
 	//Simulate SLR API url pattern
 	$expected_base_path = '/v1/api/';
 	if (substr($_SERVER['REQUEST_URI'], 0, strlen($expected_base_path)) !== $expected_base_path) exit;
 
 	//Generic functions
-  function out($response, $httpStatus) {
+  function out($response, $httpStatus, $cors) {
+    header("content-type: application/json");
     //Simulate latency
     usleep(random_int($GLOBALS['MIN_DELAY'] * 1000, $GLOBALS['MAX_DELAY'] * 1000));
+    //Set CORS headers allowing all origins
+    if ($cors) {
+      header('Access-Control-Allow-Origin: *');
+      header('Access-Control-Allow-Credentials: true');
+    }
+    //Set response code and body
     http_response_code($httpStatus);
     print(json_encode($response));
     exit; //Only allow 1 print
   }
-  function reportError() {
-    http_response_code(502);
-    return array('message' => 'Internal server error');
+
+  function noMethodError($endpoint, $method) {
+    out(
+      array('message' => 'No method found matching route api/'.$endpoint.' for http method '.$method),
+      404,
+      false
+    );
+  }
+  function genericApiError() {
+    out(
+      array('message' => 'Internal server error'),
+      502,
+      false
+    );
+  }
+  function apiOverloadError() {
+    out(
+      array('message' => 'Too Many Requests'),
+      429,
+      true
+    );
+  }
+  function tooManyTooFewRecordsError() {
+    out(
+      array('message' => 'The number of requested hashes must be greater than 0 and equal or less than '.$GLOBALS['MAX_HASHES_PER_REQUEST']),
+      400,
+      true
+    );
+  }
+  function duplicatesError() {
+    out(
+      array('message' => 'Provided list of hashes contains duplicates.'),
+      400,
+      true
+    );
   }
   function getTime() {
     return round(microtime(true) * 1000);
   }
 
-  //DAO
-  function searchSectors() {
+  //fake DAO
+  function searchSectors($nullSectors) {
     $numberOfSectors = random_int(0, count($GLOBALS['SECTORS']));
     if ($numberOfSectors === 0) {
-      return null;
+      return ($nullSectors ? null : []);
     } else {
       $foundSectors = array_rand($GLOBALS['SECTORS'], $numberOfSectors);
       if (!is_array($foundSectors)) $foundSectors = array($foundSectors);
@@ -89,39 +122,78 @@
   function shouldFail() {
     return random_int(1, 100) <= $GLOBALS['ERROR_PROB'] ? true : false;
   }
+  function fail() {
+    if (random_int(1, 100) <= $GLOBALS['ERROR_PROB_429']) apiOverloadError();
+    else genericApiError();
+  }
 
   //Endpoint 'requests'
   function handleRequestsQuery() {
-      out(array('requests' => random_int(0, 99999999) . '', 'timestamp' => getTime()), 200);
+    if ($_SERVER['REQUEST_METHOD'] !== 'GET')
+      noMethodError('requests', $_SERVER['REQUEST_METHOD']);
+    out(array('requests' => random_int(0, 99999999) . '', 'timestamp' => getTime()), 200, true);
   }
 
-  //Endpoint 'user'
+  //Endpoint 'user' for POST and GET HTTP methods
   function handleUserQuery($request) {
+    if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+      $record = explode("?", $request)[0];
+      if (strlen($record) === 0) noMethodError('user/' . $request, $_SERVER['REQUEST_METHOD']);
+      handleUserQueryGet($record);
+    }
+    else if ($_SERVER['REQUEST_METHOD'] === 'POST' && $request === "")
+      handleUserQueryPost();
+    else noMethodError('user/' . $request, $_SERVER['REQUEST_METHOD']);
+  }
+  function handleUserQueryGet($request) {
     $queryTime = getTime();
-    $result = (random_int(1, 100) <= $GLOBALS['FOUND_PROB'] ? 1 : 0);
+    $result = searchRecord();
     if ($result === 1) {
-      $sectors = searchSectors();
+      $sectors = searchSectors(true);
       $signature = sign($queryTime, $request, $result, $sectors);
-      out(array('signature' => $signature, 'sectors' => $sectors), 200);
+      out(array('signature' => $signature, 'sectors' => $sectors), 200, true);
     } else {
       $signature = sign($queryTime, $request, $result, null);
-      out(array('signature' => $signature), 404);
+      out(array('signature' => $signature), 404, true);
     }
+  }
+  function handleUserQueryPost() {
+    $queryTime = getTime();
+
+    $reqBody = file_get_contents('php://input');
+    if (strlen($reqBody) === 0) tooManyTooFewRecordsError();
+    $records = explode(",", $reqBody);
+    if (count($records) > $GLOBALS['MAX_HASHES_PER_REQUEST']) tooManyTooFewRecordsError();
+    if(count(array_unique($records)) < count($records)) duplicatesError();
+
+    $resBody =  new stdClass();
+    foreach ($records as $record) {
+      $recResult = new stdClass();
+      $recResult->found = true;
+      $sectors = searchSectors(false);
+      $recResult->signature = sign($queryTime, $record, $recResult->found, $sectors);
+      $recResult->sectors = $sectors;
+
+      $resBody->$record = $recResult;
+    }
+
+    out($resBody, 200, true);
   }
 
 
   //Detect and redirect to the right endpoint. Also calculate if should force fail.
   function endpointDetector() {
+    if (shouldFail()) fail();
+
     $url = explode('/', $_SERVER['REQUEST_URI']);
-    if ($url[3] === 'user') {
-      if (shouldFail()) out(reportError(), 502);
-      else handleUserQuery(explode("?", $url[4])[0]);
+    if (substr($url[3], 0, 4) === 'user') {
+      if (count($url) === 5) handleUserQuery($url[4]);
+      else handleUserQuery("");
     }
     else if (substr($url[3], 0, 8) === 'requests') {
-      if (shouldFail()) out(reportError(), 502);
-      else handleRequestsQuery();
+      handleRequestsQuery();
     }
-    else out(reportError(), 502);
+    else genericApiError();
   }
 
   endpointDetector();

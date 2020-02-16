@@ -1,9 +1,7 @@
-import FileSaver from 'file-saver'
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import {FormattedMessage, FormattedNumber, injectIntl} from 'react-intl'
 import { connect } from 'react-redux'
-import Config from "../config";
 import ProgressBar from './ProgressBar'
 import Spinner from "./Spinner";
 import { clearSession } from '../store/actions/requests'
@@ -29,22 +27,37 @@ class Progress extends Component {
 
   static help = 'progress-help-placeholder'
 
-  handleReset = () => {
-      let askMsg = null
-      if (this.props.results && this.props.results.success && !this.state.downloaded.success) {
-        askMsg = this.props.intl.formatMessage({
-          id: 'progress.reset.success.pending'
-        })
-      } else if (this.props.results && this.props.results.fail && !this.state.downloaded.fail) {
-        askMsg = this.props.intl.formatMessage({
-          id: 'progress.reset.fail.pending'
-        })
-      }
+  deleteResults() {
+    this.props.results.success.delete()
+    this.props.results.fail.delete()
+  }
 
-      if ( askMsg )
-        window.confirm(askMsg) && this.props.clearSession()
-      else
-        this.props.clearSession()
+  componentDidMount() {
+    window.onbeforeunload = () => {
+      this.deleteResults()
+    }
+  }
+
+  componentWillUnmount() {
+    this.deleteResults()
+  }
+
+  handleReset = () => {
+    let askMsg = null
+    if (this.props.results && this.props.results.success.totalRecords > 0 && !this.state.downloaded.success) {
+      askMsg = this.props.intl.formatMessage({
+        id: 'progress.reset.success.pending'
+      })
+    } else if (this.props.results && this.props.results.fail.totalRecords > 0 && !this.state.downloaded.fail) {
+      askMsg = this.props.intl.formatMessage({
+        id: 'progress.reset.fail.pending'
+      })
+    }
+
+    if ( askMsg )
+      window.confirm(askMsg) && this.props.clearSession()
+    else
+      this.props.clearSession()
   }
 
   handleCancel = () => {
@@ -55,23 +68,20 @@ class Progress extends Component {
     window.confirm(msg) && window.location.reload()
   }
 
+  downloadDone = (type) => {
+    const newState = this.state
+    newState.downloaded[type] = true
+    newState.downloading = false
+    this.setState(newState)
+  }
   handleDownload = (success) => {
     const type = success ? 'success' : 'fail'
-    const tag = this.props.intl.formatMessage({
-      id: 'progress.download.' + type + '.tag'
-    })
-    FileSaver.saveAs(
-      this.props.results[type],
-      this.props.results.fileName + tag + this.props.results.fileExt
-    )
+
+    const downloading = this.props.results[type].save()
     document.activeElement.blur()
 
-    const newState = this.state
-    newState.downloading = true
-    newState.downloaded[type] = true
-    this.setState(newState)
-
-    setTimeout(() => this.setState({downloading: false}), Config.downloadingTimeout)
+    this.setState({downloading: true})
+    downloading.then(() => this.downloadDone(type))
   }
   handleDownloadSuccess = () => {this.handleDownload(true)}
   handleDownloadFail = () => {this.handleDownload(false)}
@@ -141,13 +151,13 @@ class Progress extends Component {
               <FormattedMessage id="progress.download.downloading" />
             </div>
           }
-          {!this.state.downloading && this.props.results && this.props.results.success &&
+          {!this.state.downloading && this.props.results && this.props.results.success.totalRecords > 0 &&
             <label className="button-with-text">
               <button className="download-button success" onClick={this.handleDownloadSuccess} />
               <FormattedMessage id="progress.download.success" />
             </label>
           }
-          {!this.state.downloading && this.props.results && this.props.results.fail &&
+          {!this.state.downloading && this.props.results && this.props.results.fail.totalRecords > 0 &&
             <label className="button-with-text">
               <button className="download-button fail" onClick={this.handleDownloadFail} />
               <FormattedMessage id="progress.download.fail" />

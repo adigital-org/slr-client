@@ -1,6 +1,5 @@
 // Some helpers derived from the docs
 import { HmacSHA256, SHA256 } from 'crypto-js'
-import Config from "../config";
 
 const getSignatureKey = (key, dateStamp, regionName, serviceName) => {
   const kDate = HmacSHA256(dateStamp, 'AWS4' + key)
@@ -19,7 +18,7 @@ const getSignatureKey = (key, dateStamp, regionName, serviceName) => {
  * The GET params method is best suited for browsers, as it prevents needing to
  * perform a OPTIONS request before each call.
  */
-const sign = (url, opts, { secret, key }) => {
+const sign = (url, opts, { secret, key }, Config) => {
   // Get some bits from the URL and options
   const parsedUrl = new URL(url)
 
@@ -30,7 +29,7 @@ const sign = (url, opts, { secret, key }) => {
     .toISOString()
     .replace(/[-:]/g, '')
     .substring(0, 15) + 'Z'
-  const canonicalHeaders = `host:${parsedUrl.host}`
+  const canonicalHeaders = `host:${parsedUrl.host}\n`
   const signedHeaders = "host"
   const payloadHash = SHA256(opts.body || '')
 
@@ -46,16 +45,16 @@ const sign = (url, opts, { secret, key }) => {
 
   const canonicalRequest = [
     method, parsedUrl.pathname, canonicalQueryString,
-    canonicalHeaders, '', signedHeaders,
+    canonicalHeaders, signedHeaders,
     payloadHash
   ].join('\n')
 
   // Create signature
-  const stringtoSign = [
+  const stringToSign = [
     alg, dateStamp, credentialScope, SHA256(canonicalRequest)
   ].join('\n')
   const signingKey = getSignatureKey(secret, amzDate, Config.apiRegion, Config.apiService)
-  const signature = HmacSHA256(stringtoSign, signingKey)
+  const signature = HmacSHA256(stringToSign, signingKey)
 
 
   if (Config.apiAuthHeaders) {

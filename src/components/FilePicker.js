@@ -85,6 +85,7 @@ class FilePicker extends Component {
       })
   }
   fileSizeStateSelector = (fileSize, linesCounted) => {
+    if (window.electronFs) return 0 // Disable alerts on Electron environment
     const estimation = fileSize + linesCounted*Config.signatureSize*1.1
     if (estimation > Config.maxEstimatedSize) return 2 //File too big
     if (linesCounted > Config.fileRecordsAlert) return 1 //Big file

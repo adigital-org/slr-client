@@ -1,5 +1,6 @@
 import { AES, enc } from 'crypto-js'
 import { call } from '../../util/Api'
+import Config from '../../config'
 
 export const checkIfSavedCredentials = () => (dispatch) => {
   const item = localStorage.getItem('credentials')
@@ -10,7 +11,7 @@ export const checkIfSavedCredentials = () => (dispatch) => {
 
 export const addCredentials = (key, secret, remember) => async (dispatch, getState) => {
   // Do a test request just to test the credentials
-  const ret = await call('requests', { key, secret })
+  const ret = await call('requests', { key, secret }, Config)
 
   if (ret.status === 403) {
     throw new Error('Bad credentials')

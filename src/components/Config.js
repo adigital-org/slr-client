@@ -1,5 +1,5 @@
 import React, { Component } from 'react'
-import { FormattedMessage } from 'react-intl'
+import {FormattedMessage, injectIntl} from 'react-intl'
 import { connect } from 'react-redux'
 import FilePicker from './FilePicker'
 import ChannelPicker from './ChannelPicker'
@@ -33,7 +33,11 @@ class Config extends Component {
   }
 
   handleStart = () => {
-    this.props.startSession(this.state.file, this.state.channel, this.state.totalRecords)
+    const outputFileTags = {
+      success: this.props.intl.formatMessage({id: 'progress.download.tags.success'}),
+      fail: this.props.intl.formatMessage({id: 'progress.download.tags.fail'})
+    }
+    this.props.startSession(this.state.file, outputFileTags, this.state.channel, this.state.totalRecords)
   }
 
   handleReset = () => {
@@ -65,4 +69,4 @@ class Config extends Component {
   }
 }
 
-export default connect(null, { startSession })(Config)
+export default connect(null, { startSession })(injectIntl(Config))

@@ -6,6 +6,9 @@
   "welcome.intro": "Esta es la herramienta de consulta de la Lista Robinson desarrollada por Adigital.",
   "welcome.getHelp": "Si necesitas ayuda, puedes acceder en cualquier momento al manual de uso pulsando el botón de ayuda que encontrarás arriba a la derecha.",
   "welcome.start": "Comenzar",
+  "header.help": "Manual del usuario",
+  "header.desktop": "Versiones para escritorio y para servidor",
+  "header.desktop.update": "Hay una actualización disponible",
   "login.getCredentials": "¿No tienes claves de acceso API? Obtenlas ",
   "login.getCredentials.link": "aquí",
   "login.cta": "Iniciar sesión",
@@ -62,8 +65,8 @@
   "progress.title": "Procesando fichero",
   "progress.title.done": "Fichero procesado",
   "progress.download.success": "Guardar resultados",
-  "progress.download.success.tag": "_depurados-slr",
   "progress.download.fail": "Guardar errores",
-  "progress.download.fail.tag": "_consultas-fallidas",
+  "progress.download.tags.success": "_depurados-slr_",
+  "progress.download.tags.fail": "_consultas-fallidas_",
   "progress.download.downloading": "El fichero se guardará en unos segundos..."
 }
