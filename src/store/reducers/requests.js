@@ -3,19 +3,9 @@ export default function requests (state = false, action) {
     case 'session/start':
       return { working: true, originalFilename: action.payload.originalFilename }
     case 'session/progress':
-      return {
-        working: true,
-        originalFilename: state && state.originalFilename,
-        stats: { ...action.payload }
-      }
+      return { working: true, stats: { ...action.payload.stats }, originalFilename: state && state.originalFilename }
     case 'session/done':
-      return {
-        working: false,
-        originalFilename: state && state.originalFilename,
-        stats: state && state.stats,
-        done: true,
-        results: { ...action.payload }
-      }
+      return { working: false, done: true, ...action.payload, originalFilename: state && state.originalFilename }
     case 'session/clear':
       return false
     default:

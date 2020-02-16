@@ -1,10 +1,34 @@
 {
   "name": "slr-client",
-  "version": "2.1.1",
+  "version": "3.0.2",
   "private": true,
+  "description": "Client for Lista Robinson Service",
+  "author": "Adigital",
+  "main": "public/electron.js",
   "homepage": ".",
+  "build": {
+    "productName": "Cliente API - Servicio de Lista Robinson",
+    "icon": "build/1024x1024.png",
+    "artifactName": "${productName}[${os}_${arch}].${ext}",
+    "win": {
+      "target": [ "nsis:ia32", "nsis:x64", "portable:ia32", "portable:x64" ]
+    },
+    "nsis": {
+      "artifactName": "${productName}[${os}_${arch}-installer].${ext}"
+    },
+    "portable": {
+      "artifactName": "${productName}[${os}_${arch}-portable].${ext}"
+    },
+    "linux": {
+      "target": [ "AppImage:x64", "AppImage:ia32", "tar.gz:x64", "tar.gz:ia32" ]
+    },
+    "mac": {
+      "target": "zip"
+    }
+  },
   "dependencies": {
     "crypto-js": "^3.1.9-1",
+    "electron-is-dev": "^1.1.0",
     "file-saver": "^2.0.0",
     "markdown-to-jsx": "^6.9.4",
     "node-sass": "^4.12.0",
@@ -16,13 +40,30 @@
     "react-scripts": "2.1.1",
     "redux": "^4.0.1",
     "redux-thunk": "^2.3.0",
-    "rewire": "^4.0.1"
+    "rewire": "^4.0.1",
+    "node-fetch": "^2.6.0"
+  },
+  "devDependencies": {
+    "electron": "^7.0.1",
+    "electron-builder": "^22.1.0",
+    "rollup": "^1.27.14",
+    "@rollup/plugin-commonjs": "^11.0.0",
+    "@rollup/plugin-node-resolve": "^6.0.0",
+    "@rollup/plugin-json": "^4.0.1",
+    "pkg": "^4.4.2",
+    "esm": "^3.2.25"
   },
   "scripts": {
     "start": "react-scripts start",
     "build": "node ./scripts/build.js",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "cli": "node ./src/index.cli.js",
+    "cli-build": "rollup -c rollup.cli.config.js && pkg ./cli/slr-client-cli.js --targets node12,linux,win,mac,x64 --out-path ./build/dist/",
+    "electron-start": "electron .",
+    "electron-build": "yarn build && yarn electron-builder && node ./scripts/electron-clean.js",
+    "electron-build-linuxDocker": "yarn electron-build && node ./scripts/electron-build-for-linux-with-docker.js",
+    "dist-build": "yarn electron-build-linuxDocker && yarn cli-build && node ./scripts/binaries-sum.js"
   },
   "eslintConfig": {
     "extends": "react-app"

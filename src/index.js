@@ -10,6 +10,7 @@ import reducers from './store/reducers'
 import locales from './locales'
 import manuals from './locales/manual'
 import legals from './locales/legal'
+import desktops from './locales/desktop'
 import Config from './config'
 import App from './components/App'
 import * as serviceWorker from './serviceWorker'
@@ -35,6 +36,7 @@ const initialState = {
 initialState.intl.messages.markdown = {}
 initialState.intl.messages.markdown.manual = manuals[locale]
 initialState.intl.messages.markdown.legal = legals[locale]
+initialState.intl.messages.markdown.desktop = desktops[locale]
 Object.assign(initialState.intl.messages, Config.messages)
 
 // Create the store

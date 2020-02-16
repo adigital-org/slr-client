@@ -1,5 +1,4 @@
 import readCsv, { blockReader, countLines } from './FileLineGenerator'
-import fs from 'fs'
 
 const fileContents =
 `a,b,c,d

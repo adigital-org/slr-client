@@ -1,0 +1,1 @@
+Dockerfile and a few scripts to build the Electron app for Linux desktop under Windows or Mac OS.
