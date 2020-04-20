@@ -3,7 +3,7 @@
  */
 
 import { basename, dirname } from 'path'
-import { channels } from '../util/SLRUtils'
+import { channels, mixedRecord } from '../util/SLRUtils'
 import clientDefaultConfig from '../config'
 import packageJson from '../../package.json'
 import { cpus } from 'os'
@@ -21,16 +21,17 @@ const params = {
   maxRps: 2000,
   cliMaxRps: 6000,
   coresToUse: cpus().length,
-  checkUpdates: true
+  checkUpdates: true,
+  customApi: null
 }
 
-const channelOptions = Object.keys(channels)
+const channelOptions = [...Object.keys(channels), mixedRecord]
 
 const help = [
   ['Usage:'],
   ['  Required params: inputCsv=/path/to/file.csv outputFolder=/path/to/output/folder/ channel=ChannelName key=AKIAX...X secret=xx...xx'],
   ['  Channel options: ' + channelOptions.join(',')],
-  ['  ADVANCED params: linesPerTask=(number) maxRps=(number) maxCoresToUse=(number) disableCheckUpdates'],
+  ['  ADVANCED params: linesPerTask=(number) maxRps=(number) maxCoresToUse=(number) customApi=(url) disableCheckUpdates'],
   ['Documentation, updates and source code: ' + clientDefaultConfig.slrClientDistUrl],
   [`${packageJson.name} for servers v.${packageJson.version} by ${packageJson.author}\n`]
 ]
@@ -94,6 +95,9 @@ for (const arg of args) {
         break
       case "disableCheckUpdates":
         params.checkUpdates = false
+        break
+      case "customApi":
+        params.customApi = value
         break
       default:
         err(`ERROR: unknown argument '${type}'`)

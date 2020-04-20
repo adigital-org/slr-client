@@ -83,6 +83,7 @@ class FilePicker extends Component {
           fileSizeState: this.fileSizeStateSelector(this.state.preselected.size, lines)
         })
       })
+      .catch(error => this.setState({ preselected: null, error }))
   }
   fileSizeStateSelector = (fileSize, linesCounted) => {
     if (window.electronFs) return 0 // Disable alerts on Electron environment
@@ -125,7 +126,15 @@ class FilePicker extends Component {
               <button type="button" className="file-button" onClick={this.pickFile} />
               <FormattedMessage id="main.select-cta" />
               <div className={this.state.error ? "file-error" : "file-error hidden"}>
-                <FormattedMessage id="main.select.error" />
+                {this.state.error === true &&
+                  <FormattedMessage id="main.select.error" />
+                }
+                {this.state.error && this.state.error !== true &&
+                  <>
+                    <FormattedMessage id="main.selected.scanning.error" />
+                    <div className="details">{this.state.error.message}</div>
+                  </>
+                }
               </div>
             </div>
           </label>

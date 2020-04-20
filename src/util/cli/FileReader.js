@@ -7,22 +7,25 @@ import * as nodeFs from 'fs'
 export default class FileReader {
   constructor() {}
 
-  onload() {return null}
-  onerror() {return null}
+  onload() {}
+  onerror() {}
 
   readAsBinaryString(file) {
     if (file.path === null) this.onerror('No such file')
     else {
-      nodeFs.open(file.path, 'r', (err, fd) => {
-        if (err) this.onerror('Unable to open file: ' + file.path)
+      nodeFs.open(file.path, 'r', (e, fd) => {
+        if (e) this.onerror(`Unable to open file: ${file.path} due to: ${e}`)
         else {
           const bytesToRead = file.end - file.start
           const buffer = Buffer.alloc(bytesToRead)
           nodeFs.read(fd, buffer, 0, bytesToRead, file.start,
-            (err, bytesRead, buffer) => {
-              if (err) this.onerror('Unable to read file: ' + file.path)
+            (e, bytesRead, buffer) => {
+              if (e) this.onerror(`Unable to read file: ${file.path} due to: ${e}`)
               else {
-                this.onload({target: {result: buffer.toString('binary')}})
+                nodeFs.close(fd, (e) => {
+                  if (e) this.onerror(`Unable to close file: ${file.path} due to: ${e}`)
+                  else this.onload({target: {result: buffer.toString('binary')}})
+                })
               }
             }
           )

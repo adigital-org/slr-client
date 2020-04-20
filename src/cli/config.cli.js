@@ -11,5 +11,6 @@ config.maxRps = Math.floor(params.maxRps/params.coresToUse) // Max RPS per worke
 config.workingUiUpdateInterval = 1000
 config.messages.appVersion = packageJson.version
 config.downloadingTimeout = 0
+if (params.customApi) config.apiDomain = params.customApi
 
 export default config

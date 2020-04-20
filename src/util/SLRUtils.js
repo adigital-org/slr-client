@@ -63,7 +63,12 @@ export const channels = {
     campaign: 'DNI_NIF_NIE'
   }
 }
+/**
+ * A key word for mixed input file
+*/
+export const mixedRecord = 'Mixed'
 
+const defaultCountryCode = '0034'
 
 const textSrc = 'ABCDEFGHIJKLMNOPQRSTUVWXYZÀÁÇÈÉÌÍÑÒÓÙÚÜàáçèéìíñòóùúü'.split('')
 const textDst = 'abcdefghijklmnopqrstuvwxyzaaceeiinoouuuaaceeiinoouuu'.split('')
@@ -86,12 +91,12 @@ const translate = (src, dst, value) => value.split('').map((c) => {
  * Each field type has a corresponding function which takes a value,
  * and returns the value normalized according to the service rules.
  */
-const normalizers = window.normalizers = {
+export const normalizers = window.normalizers = {
   phone: (n) => {
     const normalized = n.replace(numberRegexp, '')
     if (n[0] === '+') return '00' + normalized
     if (n[0] === '0' && n[1] === '0') return normalized
-    return '0034' + normalized
+    return defaultCountryCode + normalized
   },
   text: (n) => translate(textSrc, textDst, n).replace(textRegexp, ''),
   email: (n) => translate(emailSrc, emailDst, n).replace(emailRegexp, ''),
@@ -101,22 +106,68 @@ const normalizers = window.normalizers = {
 }
 
 /**
- * Transforms a full record to a hash that can be sent to the SLR API.
- * Applies the normalizers to each field, and hashes the result as per the spec.
+ * Check if the given record match the expected structure for
+ * the given channel and perform minor fixes if needed.
+ * On error, warn and return null.
  */
-export const record2hash = (fields, channel) => {
-  const { id, types } = channels[channel]
-  // Drop company custom field, if any
-  const mFields = [...fields]
-  if (mFields.length === types.length+1) mFields.shift()
-  // Report malformed records
-  if (mFields.length !== types.length) {
-    console.warn('Malformed record: ', fields)
+export const sanitize = (fields, channel) => {
+  const malformed = (message) => {
+    console.warn(message, fields)
     return null
   }
-  // Process each field with the corresponding channel rules
-  const filtered = mFields.map((val, i) => normalizers[types[i]](val))
-  const query = id + filtered.join('')
+
+  // We do not want to modify fields input, so we have to create a copy...
+  const sanFields = [...fields]
+
+  // With mixed input, get record's channel and drop it from sanitized fields.
+  const sanChannel = channel === mixedRecord ? sanFields.shift() : channel
+
+  // Channel check
+  if (!channels.hasOwnProperty(sanChannel))
+    return malformed(`Unknown channel type "${sanChannel}" for record:`)
+
+  const expectedFieldsLength = channels[sanChannel].fields.length
+
+  // Reject records with wrong fields number (malformed records). Records from
+  // mixed input files can have more fields than expected due to CSV spec.
+  // For example:
+  //    "PhoneFull","Name","Surname","Surname2","555444666"
+  //    "PhoneSimple","555444666",,,
+  // Drop (pop()) extra fields if empty and check if record length matches
+  // channel spec.
+  if (sanFields.length !== expectedFieldsLength) {
+    if (channel !== mixedRecord) {
+      // May contain custom field, if not, reject as malformed record.
+      if (sanFields.length === expectedFieldsLength+1) sanFields.shift()
+      else return malformed('Malformed record:')
+    }
+    else if (sanFields.length < expectedFieldsLength) return malformed('Malformed record:')
+    else if (sanFields.length > expectedFieldsLength) {
+      while (
+        sanFields.length !== expectedFieldsLength &&
+        sanFields[sanFields.length-1] === ''
+        ) sanFields.pop()
+      if (sanFields.length === expectedFieldsLength+1) sanFields.shift()
+      else if (sanFields.length !== expectedFieldsLength) return malformed('Malformed record:')
+    }
+  }
+
+  return { channel: sanChannel, fields: sanFields }
+}
+
+/**
+ * Transforms a full record to a hash that can be sent to the SLR API.
+ * Applies the normalizers to each field, and hashes the result as per the spec.
+ * Expect as input a json with the record values: channel and fields.
+ */
+export const record2hash = (recordValues) => {
+  const { channel, fields } = recordValues
+  const { id, types } = channels[channel]
+  // Process each field with the corresponding channel rules. Report if normalized record is empty
+  const filtered = fields.map((val, i) => normalizers[types[i]](val)).join('')
+  if (filtered.length === 0 || filtered === defaultCountryCode)
+    console.warn(`Warning: empty record after normalization. Original: "${fields}". Normalized for channel ${channel}: "${filtered}".`)
+  const query = id + filtered
   return SHA256(query).toString()
 }
 
@@ -126,6 +177,7 @@ export const record2hash = (fields, channel) => {
  * Note that it can guess wrong, or return undefined if no match.
  */
 export const guessChannel = (fields) => {
+  if (Object.keys(channels).indexOf(fields[0]) > -1) return mixedRecord
   const mFields = [...fields]
   if (mFields.length === 8 || mFields.length === 5 || mFields.length === 2) mFields.shift()
   if (mFields.length === 7) return 'Postal'

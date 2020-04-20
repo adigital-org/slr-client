@@ -9,8 +9,8 @@ const maxParallel = autoParallel < 50 ? autoParallel : 50 // Prevent too many th
 
 const distUrl = 'https://cliente.api.listarobinson.es'
 
-// Use complete URL for downloads or links will be broken in Electron env.
-export default {
+// Use complete URL for downloads or links will be broken in Electron/CLI env.
+const config = {
   messages: {
     "appSlrHomeUrl": "https://www.listarobinson.es",
     "appSlrGetKeysUrl": "/enterprise/subscription-method",
@@ -36,15 +36,17 @@ export default {
 
   slrClientDistUrl: distUrl,
 
-  apiBaseUrl: "https://api.listarobinson.es/v1/api/",
-  //apiBaseUrl: "http://localhost/v1/api/",
+  apiProtocol: "https",
+  apiDomain: "api.listarobinson.es",
+  apiBaseUrl: "/v1/api/",
+
   apiRegion: "eu-west-1",
   apiService: "execute-api",
   //'true' to send AWS signature in headers, 'false' to send it in query string
   //AWS signature in headers may require CORS preflight
   apiAuthHeaders: false,
 
-  useKeepAlive: true, // Only for CLI usage. Disable for testing, enable in production for better performance.
+  useKeepAlive: true, // CLI mode: if false, enables http protocol. DO NOT DISABLE FOR PRODUCTION ENV. ONLY FOR TESTING.
 
   latestVersionCheckUrl: distUrl + "/index.html",
 
@@ -63,3 +65,7 @@ export default {
 
   downloadingTimeout: 5000 // ms
 }
+
+window.customApi = (newUrl) => config.apiDomain = newUrl
+
+export default config

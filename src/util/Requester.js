@@ -1,4 +1,4 @@
-import { record2hash } from './SLRUtils'
+import { sanitize, record2hash } from './SLRUtils'
 import { call } from './Api'
 import scheduler from './Scheduler'
 import retrier from './Retrier'
@@ -102,8 +102,8 @@ export const startRequests = async (hugeFiles, channel, totalRecords, Config, cr
     // an array with the records. We will loop this array when saving results.
     const hashedRecords = {}
     for (let record of records) {
-      if (record.done) break;
-      let hash = record2hash(record.value.fields, channel)
+      if (record.done) break
+      let hash = record2hash(sanitize(record.value.fields, channel))
       if (hash === null || hash.length <= 0) {
         setErrors({'fakeKey': [record.value]})
       } else {
@@ -113,7 +113,11 @@ export const startRequests = async (hugeFiles, channel, totalRecords, Config, cr
     }
 
     try {
+      // If all records has been discarded (i.e.: due to malformation),
+      // request body (reqBody) will be empty, so end this batch without
+      // calling API by returning true. Otherwise, call API.
       const reqBody = Object.keys(hashedRecords).join(',')
+      if (reqBody.length <= 0) return true
       const resBody = await request(reqBody, channel, key, secret)
       setSuccess(hashedRecords, resBody)
     } catch (e) {
