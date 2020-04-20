@@ -63,4 +63,9 @@ export default class ConsolidatedProgress {
     this._calcProgress()
     this._calcEta()
   }
+
+  updateTotalRecords(totalRecords) {
+    this.totalRecords = totalRecords
+    this.update()
+  }
 }

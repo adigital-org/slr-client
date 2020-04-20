@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import { FormattedMessage, injectIntl } from 'react-intl'
-import { channels } from '../util/SLRUtils'
+import { channels, mixedRecord } from '../util/SLRUtils'
 
 import './ChannelPicker.sass'
 
@@ -14,7 +14,9 @@ class ChannelPicker extends Component {
   handleClick = (rule, check) => () => {
     if (this.props.guessed && rule !== this.props.guessed && check) {
       const guessedFileType = this.props.intl.formatMessage({
-        id: 'main.options.type.' + channels[this.props.guessed].fileType
+        id: 'main.options.type.' +
+          (this.props.guessed !== mixedRecord ?
+            channels[this.props.guessed].fileType : mixedRecord)
       })
       const msg = this.props.intl.formatMessage({
         id: 'main.options.type.changeAgainstGuesser'
@@ -26,19 +28,21 @@ class ChannelPicker extends Component {
     document.activeElement.blur()
   }
 
-  compatibleFileTypes = Object.keys(channels).reduce((rules, rule) => {
-    rules[channels[rule].fileType] === undefined ?
+  compatibleFileTypes = [...Object.keys(channels), mixedRecord].reduce((rules, rule) => {
+    if (rule === mixedRecord) rules[mixedRecord] = [rule]
+    else rules[channels[rule].fileType] === undefined ?
       rules[channels[rule].fileType] = [rule] :
       rules[channels[rule].fileType].push(rule)
     return rules
-  }, [])
+  }, {})
 
-  fileTypeCampaigns = Object.keys(channels).reduce((rules, rule) => {
-    rules[channels[rule].fileType] === undefined ?
+  fileTypeCampaigns = [...Object.keys(channels), mixedRecord].reduce((rules, rule) => {
+    if (rule === mixedRecord) rules[mixedRecord] = [rule]
+    else rules[channels[rule].fileType] === undefined ?
       rules[channels[rule].fileType] = [channels[rule].campaign] :
       rules[channels[rule].fileType].push(channels[rule].campaign)
     return rules
-  }, [])
+  }, {})
 
   render = () => {
     return (
@@ -58,23 +62,24 @@ class ChannelPicker extends Component {
         </div>
 
         {this.props.value &&
+          channels[this.props.value] &&
           this.fileTypeCampaigns[channels[this.props.value].fileType].length > 1 &&
-        <div className="campaign">
-          <FormattedMessage id="main.options.type.Campaign" />
-          <div className="campaign-buttons">
+          <div className="campaign">
+            <FormattedMessage id="main.options.type.Campaign" />
+            <div className="campaign-buttons">
 
-            {this.fileTypeCampaigns[channels[this.props.value].fileType].map((campaign, index) =>
-              <button className={channels[this.props.value].campaign === campaign ?
-                "button start campaign-type file-type-selected" : "button start campaign-type"
-              } type="button" key={campaign} onClick={this.handleClick(
-                this.compatibleFileTypes[channels[this.props.value].fileType][index]
-              )}>
-                <FormattedMessage id={"main.options.type.Campaign." + campaign} />
-              </button>
-            )}
+              {this.fileTypeCampaigns[channels[this.props.value].fileType].map((campaign, index) =>
+                <button className={channels[this.props.value].campaign === campaign ?
+                  "button start campaign-type file-type-selected" : "button start campaign-type"
+                } type="button" key={campaign} onClick={this.handleClick(
+                  this.compatibleFileTypes[channels[this.props.value].fileType][index]
+                )}>
+                  <FormattedMessage id={"main.options.type.Campaign." + campaign} />
+                </button>
+              )}
 
+            </div>
           </div>
-        </div>
         }
 
       </div>

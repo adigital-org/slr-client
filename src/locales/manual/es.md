@@ -117,8 +117,6 @@ Los ficheros compatibles con el Cliente API de Lista Robinson deben:
 
 Según el canal a través del que se va a desarrollar la acción publicitaria, el fichero debe contener un tipo de datos u otro, de acuerdo con el Anexo I del [Reglamento del Servicio de Lista Robinson](https://www.listarobinson.es/reglamento) y que te resumimos a continuación.
 
-Un mismo fichero no puede combinar distintos tipos de datos. Si tienes que consultar varios canales, deberás hacerlo con distintos ficheros para cada canal.
-
 #### 3.1.1 Campañas publicitarias mediante llamadas telefónicas o SMS/MMS
 
 Si tu empresa va a desarrollar acciones publicitarias a través de llamadas telefónicas o por SMS/MMS, el fichero puede estructurarse de dos maneras distintas:
@@ -185,20 +183,53 @@ Por ejemplo:
     - "12345A"
     - "Y1234A"
 
-#### 3.1.5 Opcional: añadir un identificador en cada registro del fichero CSV
+#### 3.1.5 Fichero CSV con registros para distintos canales
+
+Si lo deseas, puedes incluir en un mismo fichero CSV varios canales, siempre y cuando:
+
+1. Se respete la estructura indicada en los apartados anteriores.
+2. Cada registro incorpore en la primera columna el indicador de canal correspondiente, pudiendo ser:
+    - "PhoneFull": consulta al canal telefónico con nombre, apellidos y número de teléfono.
+    - "PhoneSimple": consulta al canal telefónico sólo con número de teléfono.
+    - "SmsFull": consulta al canal SMS/MMS con nombre, apellidos y número de teléfono.
+    - "SmsSimple": consulta al canal SMS/MMS sólo con número de teléfono.
+    - "Postal": consulta al canal postal.
+    - "Email": consulta al canal de correo electrónico.
+    - "DNI\_NIF\_NIE": consulta por DNI/NIF o NIE.
+
+Por ejemplo:
+
+![Ejemplo fichero_mixto](manual-mixed-file.560x249.png "Ejemplo de fichero con registros para distintos canales")
+
+Opcionalmente pueden rellenarse las columnas vacías de los registros de canales más cortos con campos vacíos. Por ejemplo:
+
+![Ejemplo fichero_mixto](manual-mixed-file-with-empty-fields.557x251.png "Ejemplo de fichero con registros para distintos canales y columnas vacías de relleno")
+
+
+#### 3.1.6 Opcional: añadir un identificador en cada registro del fichero CSV
 
 Si en tu empresa asignáis internamente identificadores a vuestros clientes, como puede ser un "número de cliente", puedes incluirlo en el fichero CSV a procesar para poder tratar los resultados después de la consulta con mayor facilidad.
 
-Si decides incluirlo en el fichero CSV, el identificador deberá incorporarse siempre en la primera columna y en todos los registros del fichero CSV. Por ejemplo:
+Si decides incluirlo en el fichero CSV, el identificador deberá incorporarse en todos los registros del fichero y deberá estar:
 
-![Ejemplo dni](manual-phonefull-w-customfield.501x178.png "Ejemplo teléfono nombres y apellidos con identificador personalizado")
+ - En la primera columna, si el fichero CSV sólo contiene registros de un único canal.
+ - En la segunda columna, si el fichero CSV tiene registros de distintos canales.
 
+Ejemplo de fichero CSV con identificador de empresa y sólo para el canal telefónico con nombre y apellidos:
+
+![Ejemplo Id_Empresa_Un_Canal](manual-phonefull-w-customfield.501x178.png "Ejemplo teléfono nombres y apellidos con identificador personalizado")
+
+Ejemplo de fichero CSV con identificador de empresa y registros mixtos, para canal telefónico con nombre y apellidos y para email:
+
+![Ejemplo Id_Empresa_Mixto](manual-mixed-customfield.601x232.png "Ejemplo fichero con registros para varios canales con  identificador personalizado")
 
 ### 3.2 Cómo iniciar el proceso de consulta
 
 Una vez hayas preparado el fichero CSV con los datos que deseas consultar en la Lista Robinson, tendrás que iniciar sesión, tal y como se describe más arriba en el apartado correspondiente y, una vez dentro de la plataforma, deberás seleccionar el fichero en el Cliente API.
 
 A continuación, deberás indicar el tipo de datos que contiene. El Cliente API tratará de determinar el tipo de datos que contiene el fichero CSV mediante un análisis y te propondrá una opción. **Es importante que revises que el análisis refleja el tipo de datos correcto y, si no es así, lo corrijas**.
+
+Si tu fichero contiene registros para realizar consultas a distintos canales, deberás elegir la opción "Mixto".
 
 Si tu fichero contiene como datos “_teléfonos_” o “_nombres, apellidos y teléfonos_”, también deberás indicar el canal de tu campaña, es decir, si la realizarás mediante llamadas telefónicas o SMS/MMS.
 
@@ -269,6 +300,7 @@ El Cliente API para servidor reporta el progreso del proceso de consulta cada se
 
 El campo "_status_" puede contener los siguientes valores:
 
+- _error-reading-file_: cuando el proceso de consulta no se ha podido iniciar por un error en la lectura del fichero. Este error puede producirse si el fichero no tiene una codificación UTF-8 correcta. En la salida _stderr_ se mostrarán más detalles sobre el error.
 - _working_: el proceso de consulta se está ejecutando.
 - _user-cancel_: el proceso de consulta ha sido detenido por el usuario (ej.: ctrl+c)
 - _fatal-sys-error_: el proceso de consulta se ha detenido por un error del sistema.
@@ -311,5 +343,6 @@ El Cliente API para servidor admite los siguientes parámetros avanzados:
 2. _maxCoresToUse_: número máximo de núcleos de la CPU a utilizar. Cuantos más núcleos en uso, más memoria RAM se requerirá. Por defecto, el Cliente API para servidor tratará de utilizar el número máximo de núcleos disponibles.
 3. _linesPerTask_: número de registros que se mantendrán en memoria por cada núcleo. Cuanto más alta sea esta cifra, mayor será el consumo de RAM, aunque puede favorecer la velocidad de consulta. Por defecto, este valor es de 40000.
 4. _disableCheckUpdates_: desactiva las comprobaciones de actualizaciones del Cliente API para servidor.
+5. _customApi_: URL de API del Servicio de Lista Robinson personalizada. Debe indicarse sólo el dominio, sin el protocolo ni la ruta. Puede especificarse un puerto distinto del predeterminado utilizando ":".
 
 Si tu sistema tiene poca memoria RAM o si el sistema operativo corta el proceso del Cliente API para servidor por falta de memoria RAM libre, puedes reducir _linesPerTask_ o _maxCoresToUse_ para reducir el uso de memoria.

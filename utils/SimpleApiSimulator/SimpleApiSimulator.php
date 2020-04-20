@@ -5,23 +5,23 @@
 
   //TESTED ONLY UNDER PHP 7.0.3 + APACHE
   //Config
-  $GLOBALS['MIN_DELAY'] = 60; //milliseconds
-  $GLOBALS['MAX_DELAY'] = 200; //milliseconds
+  $GLOBALS['MIN_DELAY'] = 30; //milliseconds
+  $GLOBALS['MAX_DELAY'] = 90; //milliseconds
   $GLOBALS['FOUND_PROB'] = 50; //0 to 100 (%). Default 50.
-  $GLOBALS['ERROR_PROB'] = 10; //0 to 100 (%). Default 10.
+  $GLOBALS['ERROR_PROB'] = 5; //0 to 100 (%). Default 10.
   $GLOBALS['ERROR_PROB_429'] = 25; //0 to 100 (%). Default 25.
 
   $GLOBALS['MAX_HASHES_PER_REQUEST'] = 20;
-  $GLOBALS["SECRET"] = '85e6959915cc2d88b23b9f13c03f3b2b7d498db444a06d8a94a695c4e01e3228';
-  $GLOBALS["SECTORS"] = ['1','2','3','4','5','6','7','8','9'];
+  $GLOBALS['SECRET'] = '85e6959915cc2d88b23b9f13c03f3b2b7d498db444a06d8a94a695c4e01e3228';
+  $GLOBALS['SECTORS'] = ['1','2','3','4','5','6','7','8','9'];
 
 	//Simulate SLR API url pattern
 	$expected_base_path = '/v1/api/';
 	if (substr($_SERVER['REQUEST_URI'], 0, strlen($expected_base_path)) !== $expected_base_path) exit;
 
 	//Generic functions
-  function out($response, $httpStatus, $cors) {
-    header("content-type: application/json");
+  function out($response, $httpStatus, $cors, $setError) {
+    header('content-type: application/json');
     //Simulate latency
     usleep(random_int($GLOBALS['MIN_DELAY'] * 1000, $GLOBALS['MAX_DELAY'] * 1000));
     //Set CORS headers allowing all origins
@@ -29,23 +29,27 @@
       header('Access-Control-Allow-Origin: *');
       header('Access-Control-Allow-Credentials: true');
     }
+    //Set error
+    if ($setError) error_log('Client error '.$httpStatus.': '.$response['message']);
     //Set response code and body
     http_response_code($httpStatus);
     print(json_encode($response));
-    exit; //Only allow 1 print
+    exit; //Allow only 1 print
   }
 
   function noMethodError($endpoint, $method) {
     out(
       array('message' => 'No method found matching route api/'.$endpoint.' for http method '.$method),
       404,
-      false
+      false,
+      true
     );
   }
   function genericApiError() {
     out(
       array('message' => 'Internal server error'),
       502,
+      false,
       false
     );
   }
@@ -53,13 +57,15 @@
     out(
       array('message' => 'Too Many Requests'),
       429,
-      true
+      true,
+      false
     );
   }
   function tooManyTooFewRecordsError() {
     out(
       array('message' => 'The number of requested hashes must be greater than 0 and equal or less than '.$GLOBALS['MAX_HASHES_PER_REQUEST']),
       400,
+      true,
       true
     );
   }
@@ -67,6 +73,7 @@
     out(
       array('message' => 'Provided list of hashes contains duplicates.'),
       400,
+      true,
       true
     );
   }
@@ -89,8 +96,8 @@
       return $sectors;
     }
   }
-  function searchRecord() {
-    return (random_int(1, 100) <= $GLOBALS['FOUND_PROB'] ? 1 : 0);
+  function found() {
+    return (random_int(1, 100) <= $GLOBALS['FOUND_PROB']);
   }
 
   //Signature
@@ -108,14 +115,12 @@
       $GLOBALS['SECRET'] .
       $sectors);
 
-    $signature = base64_encode(join(':', array(
+    return base64_encode(join(':', array(
       $queryTime,
       $request,
       $sectors,
       $proofOfQuery
     )));
-
-    return $signature;
   }
 
   //Should fail?
@@ -131,30 +136,30 @@
   function handleRequestsQuery() {
     if ($_SERVER['REQUEST_METHOD'] !== 'GET')
       noMethodError('requests', $_SERVER['REQUEST_METHOD']);
-    out(array('requests' => random_int(0, 99999999) . '', 'timestamp' => getTime()), 200, true);
+    out(array('requests' => random_int(0, 99999999) . '', 'timestamp' => getTime()), 200, true, false);
   }
 
   //Endpoint 'user' for POST and GET HTTP methods
   function handleUserQuery($request) {
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-      $record = explode("?", $request)[0];
+      $record = explode('?', $request)[0];
       if (strlen($record) === 0) noMethodError('user/' . $request, $_SERVER['REQUEST_METHOD']);
       handleUserQueryGet($record);
     }
-    else if ($_SERVER['REQUEST_METHOD'] === 'POST' && $request === "")
+    else if ($_SERVER['REQUEST_METHOD'] === 'POST' && $request === '')
       handleUserQueryPost();
     else noMethodError('user/' . $request, $_SERVER['REQUEST_METHOD']);
   }
   function handleUserQueryGet($request) {
     $queryTime = getTime();
-    $result = searchRecord();
+    $result = found() ? 1 : 0;
     if ($result === 1) {
       $sectors = searchSectors(true);
       $signature = sign($queryTime, $request, $result, $sectors);
-      out(array('signature' => $signature, 'sectors' => $sectors), 200, true);
+      out(array('signature' => $signature, 'sectors' => $sectors), 200, true, false);
     } else {
       $signature = sign($queryTime, $request, $result, null);
-      out(array('signature' => $signature), 404, true);
+      out(array('signature' => $signature), 404, true, false);
     }
   }
   function handleUserQueryPost() {
@@ -162,14 +167,14 @@
 
     $reqBody = file_get_contents('php://input');
     if (strlen($reqBody) === 0) tooManyTooFewRecordsError();
-    $records = explode(",", $reqBody);
+    $records = explode(',', $reqBody);
     if (count($records) > $GLOBALS['MAX_HASHES_PER_REQUEST']) tooManyTooFewRecordsError();
     if(count(array_unique($records)) < count($records)) duplicatesError();
 
     $resBody =  new stdClass();
     foreach ($records as $record) {
       $recResult = new stdClass();
-      $recResult->found = true;
+      $recResult->found = found();
       $sectors = searchSectors(false);
       $recResult->signature = sign($queryTime, $record, $recResult->found, $sectors);
       $recResult->sectors = $sectors;
@@ -177,7 +182,7 @@
       $resBody->$record = $recResult;
     }
 
-    out($resBody, 200, true);
+    out($resBody, 200, true, false);
   }
 
 
@@ -188,7 +193,7 @@
     $url = explode('/', $_SERVER['REQUEST_URI']);
     if (substr($url[3], 0, 4) === 'user') {
       if (count($url) === 5) handleUserQuery($url[4]);
-      else handleUserQuery("");
+      else handleUserQuery('');
     }
     else if (substr($url[3], 0, 8) === 'requests') {
       handleRequestsQuery();

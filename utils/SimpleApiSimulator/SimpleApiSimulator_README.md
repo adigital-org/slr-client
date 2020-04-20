@@ -28,6 +28,10 @@ location / {
 
 2. Update your API Client config.js.
 
+Audit
+-----
+
+To audit performance and responses, check web server logs (_access.log_). Errors due to malformed requests are logged to default PHP error log (_with error_log(...)_).
 
 Configuration
 -------------

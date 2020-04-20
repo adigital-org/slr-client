@@ -1,4 +1,4 @@
-import { record2hash, guessChannel /*, normalizers*/ } from './SLRUtils'
+import { record2hash, sanitize, guessChannel, normalizers } from './SLRUtils'
 
 test('Text normalizer test with NFC characters', () => {
   expect(normalizers.text('José¬')).toEqual('jose')
@@ -101,68 +101,154 @@ test('Phone normalizer test', () => {
   expect(normalizers.phone('325256174')).toEqual('0034325256174')
 })
 
-test('Test record to hash conversion', () => {
-  expect(record2hash(['345678890'],'PhoneSimple'))
+test('Test channel detection for mixed input files', () => {
+  // Well-formed mixed without custom field
+  expect(sanitize(['DNI_NIF_NIE','00000000A'],'Mixed'))
+    .toEqual({ channel: 'DNI_NIF_NIE', fields: ['00000000A']})
+  expect(sanitize(['PhoneFull','Name','FirstSurname','SecondSurname','345 678 890'],'Mixed'))
+    .toEqual({ channel: 'PhoneFull', fields: ['Name','FirstSurname','SecondSurname','345 678 890'] })
+  expect(sanitize(['PhoneSimple','345678890'],'Mixed'))
+    .toEqual({ channel: 'PhoneSimple', fields: ['345678890'] })
+  expect(sanitize(['SmsFull','Name','FirstSurname','SecondSurname','345678890'],'Mixed'))
+    .toEqual({ channel: 'SmsFull', fields: ['Name','FirstSurname','SecondSurname','345678890'] })
+  expect(sanitize(['SmsSimple','345678890'],'Mixed'))
+    .toEqual({ channel: 'SmsSimple', fields: ['345678890'] })
+  expect(sanitize(['Email','regularmail@listarobinson.net'],'Mixed'))
+    .toEqual({ channel: 'Email', fields: ['regularmail@listarobinson.net'] })
+  expect(sanitize(['Postal','Name', 'FirstSurname', 'SecondSurname', 'MyStreet', '15', '01000', '01'],'Mixed'))
+    .toEqual({ channel: 'Postal', fields: ['Name', 'FirstSurname', 'SecondSurname', 'MyStreet', '15', '01000', '01'] })
+
+  // Well-formed with custom field
+  expect(sanitize(['DNI_NIF_NIE','customField','00000000A'],'Mixed'))
+    .toEqual({ channel: 'DNI_NIF_NIE', fields: ['00000000A']})
+  expect(sanitize(['PhoneFull','customField','Name','FirstSurname','SecondSurname','345 678 890'],'Mixed'))
+    .toEqual({ channel: 'PhoneFull', fields: ['Name','FirstSurname','SecondSurname','345 678 890'] })
+  expect(sanitize(['PhoneSimple','customField','345678890'],'Mixed'))
+    .toEqual({ channel: 'PhoneSimple', fields: ['345678890'] })
+  expect(sanitize(['SmsFull','customField','Name','FirstSurname','SecondSurname','345678890'],'Mixed'))
+    .toEqual({ channel: 'SmsFull', fields: ['Name','FirstSurname','SecondSurname','345678890'] })
+  expect(sanitize(['SmsSimple','customField','345678890'],'Mixed'))
+    .toEqual({ channel: 'SmsSimple', fields: ['345678890'] })
+  expect(sanitize(['Email','customField','regularmail@listarobinson.net'],'Mixed'))
+    .toEqual({ channel: 'Email', fields: ['regularmail@listarobinson.net'] })
+  expect(sanitize(['Postal','customField','Name', 'FirstSurname', 'SecondSurname', 'MyStreet', '15', '01000', '01'],'Mixed'))
+    .toEqual({ channel: 'Postal', fields: ['Name', 'FirstSurname', 'SecondSurname', 'MyStreet', '15', '01000', '01'] })
+
+  // Malformed in mixed input
+  expect(sanitize(['WrongChannelKey','Name'],'Mixed')).toEqual(null)
+})
+
+test('Test record length errors detection in single-channel input', () => {
+  // Detect less fields than expected in single-channel input
+  expect(sanitize(['ThisIsA','PostalRecord','With','LessFieldsThanExpected'],'Postal')).toEqual(null)
+  // Detect more fields than expected in single-channel input
+  expect(sanitize(['ThisIsA','SmsFullRecordWith','LessFieldsThanExpected'],'SmsFull')).toEqual(null)
+
+  // No custom field tests needed here as custom field detection depends on well-formed records.
+})
+
+test('Test record length errors detection and fixes in mixed input', () => {
+  // Detect less fields than expected in mixed input
+  expect(sanitize(['Postal','LessFieldsThanExpected'],'Mixed')).toEqual(null)
+  // Detect more non-empty fields than expected in mixed input
+  expect(sanitize(['PhoneSimple','MoreNon-EmptyFieldsThanExpected','','a',''],'Mixed')).toEqual(null)
+  // Detect and FIX more (empty) fields than expected in mixed input
+  expect(sanitize(['PhoneSimple','More(Empty)FieldsThanExpected','','',''],'Mixed'))
+    .toEqual({channel: 'PhoneSimple', fields: ['More(Empty)FieldsThanExpected']})
+
+  // Detect and FIX more (empty) fields than expected in mixed input WITH custom field
+  expect(sanitize(['PhoneSimple','customField','More(Empty)FieldsThanExpected','','',''],'Mixed'))
+    .toEqual({channel: 'PhoneSimple', fields: ['More(Empty)FieldsThanExpected']})
+
+  // Do not drop extra empty fields on single-channel input
+  expect(sanitize(['More(Empty)FieldsThanExpected','',''],'PhoneSimple')).toEqual(null)
+})
+
+test('Test record to hash conversion with custom fields and sanitizer', () => {
+  expect(record2hash(sanitize(['customField','345678890'],'PhoneSimple')))
     .toEqual('9a0d14c71b6bb4b50fd4a9efc0536de8c7198f4bebdadcc4e7ee32731fb75c15')
-  expect(record2hash(['customField','345678890'],'PhoneSimple'))
-    .toEqual('9a0d14c71b6bb4b50fd4a9efc0536de8c7198f4bebdadcc4e7ee32731fb75c15')
-  expect(record2hash(['345678890'],'SmsSimple'))
-    .toEqual('ea48b0f337aded1ab2d7fb495b075883b91319a0c8c5b88d5be9d28c95663ac4')
-  expect(record2hash(['customField','345678890'],'SmsSimple'))
+  expect(record2hash(sanitize(['customField','345678890'],'SmsSimple')))
     .toEqual('ea48b0f337aded1ab2d7fb495b075883b91319a0c8c5b88d5be9d28c95663ac4')
 
-  expect(record2hash(['Name','FirstSurname','SecondSurname','345 678 890'],'PhoneFull'))
+  expect(record2hash(sanitize(['customField','Name','FirstSurname','SecondSurname','345 678 890'],'PhoneFull')))
     .toEqual('64dd89690038f07b774f3283d4e492550e6b0dc64ecb3a62bb4f99b8157ab031')
-  expect(record2hash(['customField','Name','FirstSurname','SecondSurname','345 678 890'],'PhoneFull'))
-    .toEqual('64dd89690038f07b774f3283d4e492550e6b0dc64ecb3a62bb4f99b8157ab031')
-  expect(record2hash(['Name','FirstSurname','SecondSurname','345678890'],'SmsFull'))
-    .toEqual('e1d4f02276fd087415f9b9f8886506b30ebc8959ebe34150910036ff3149e9bd')
-  expect(record2hash(['customField','Name','FirstSurname','SecondSurname','345678890'],'SmsFull'))
+  expect(record2hash(sanitize(['customField','Name','FirstSurname','SecondSurname','345678890'],'SmsFull')))
     .toEqual('e1d4f02276fd087415f9b9f8886506b30ebc8959ebe34150910036ff3149e9bd')
 
-  expect(record2hash(['Name', 'FirstSurname', 'SecondSurname', 'MyStreet', '15', '01000', '01'],'Postal'))
-    .toEqual('6c1f4252badfedb77367cefbf2fb1e4e4b00995d4b205c1fbb28c85f77fa1300')
-  expect(record2hash(['customField','Name', 'FirstSurname', 'SecondSurname', 'MyStreet', '15', '01000', '01'],'Postal'))
+  expect(record2hash(sanitize(['customField','Name', 'FirstSurname', 'SecondSurname', 'MyStreet', '15', '01000', '01'],'Postal')))
     .toEqual('6c1f4252badfedb77367cefbf2fb1e4e4b00995d4b205c1fbb28c85f77fa1300')
 
-  expect(record2hash(['regularmail@listarobinson.net'],'Email'))
-    .toEqual('54c46846985b7ee2b5a1dbc899b0f55dbb711f5a7d84ab3f9f8d37060dad2174')
-  expect(record2hash(['customField','regularmail@listarobinson.net'],'Email'))
+  expect(record2hash(sanitize(['customField','regularmail@listarobinson.net'],'Email')))
     .toEqual('54c46846985b7ee2b5a1dbc899b0f55dbb711f5a7d84ab3f9f8d37060dad2174')
 
   //DNI
-  expect(record2hash(['98765432A'],'DNI_NIF_NIE'))
-    .toEqual('e524b10e0f5e00f0712ac8af272729df0b66eb7110ef1cea3ba17c582d68d28d')
-  expect(record2hash(['customField','98765432A'],'DNI_NIF_NIE'))
+  expect(record2hash(sanitize(['customField','98765432A'],'DNI_NIF_NIE')))
     .toEqual('e524b10e0f5e00f0712ac8af272729df0b66eb7110ef1cea3ba17c582d68d28d')
 
   //NIE
-  expect(record2hash(['X9876543A'],'DNI_NIF_NIE'))
+  expect(record2hash(sanitize(['customField','X9876543A'],'DNI_NIF_NIE')))
     .toEqual('0581aca5a93de562091691b42e6f84afc7e29e8d9a3d61e4535939788221678d')
-  expect(record2hash(['customField','X9876543A'],'DNI_NIF_NIE'))
+})
+
+test('Test record to hash conversion', () => {
+  expect(record2hash({fields: ['345678890'], channel: 'PhoneSimple'}))
+    .toEqual('9a0d14c71b6bb4b50fd4a9efc0536de8c7198f4bebdadcc4e7ee32731fb75c15')
+  expect(record2hash({fields: ['345678890'], channel: 'SmsSimple'}))
+    .toEqual('ea48b0f337aded1ab2d7fb495b075883b91319a0c8c5b88d5be9d28c95663ac4')
+
+  expect(record2hash({fields: ['Name','FirstSurname','SecondSurname','345 678 890'], channel: 'PhoneFull'}))
+    .toEqual('64dd89690038f07b774f3283d4e492550e6b0dc64ecb3a62bb4f99b8157ab031')
+  expect(record2hash({fields: ['Name','FirstSurname','SecondSurname','345678890'], channel: 'SmsFull'}))
+    .toEqual('e1d4f02276fd087415f9b9f8886506b30ebc8959ebe34150910036ff3149e9bd')
+
+  expect(record2hash({fields: ['Name', 'FirstSurname', 'SecondSurname', 'MyStreet', '15', '01000', '01'], channel: 'Postal'}))
+    .toEqual('6c1f4252badfedb77367cefbf2fb1e4e4b00995d4b205c1fbb28c85f77fa1300')
+
+  expect(record2hash({fields: ['regularmail@listarobinson.net'], channel: 'Email'}))
+    .toEqual('54c46846985b7ee2b5a1dbc899b0f55dbb711f5a7d84ab3f9f8d37060dad2174')
+
+  //DNI
+  expect(record2hash({fields: ['98765432A'], channel: 'DNI_NIF_NIE'}))
+    .toEqual('e524b10e0f5e00f0712ac8af272729df0b66eb7110ef1cea3ba17c582d68d28d')
+
+  //NIE
+  expect(record2hash({fields: ['X9876543A'], channel: 'DNI_NIF_NIE'}))
     .toEqual('0581aca5a93de562091691b42e6f84afc7e29e8d9a3d61e4535939788221678d')
 })
 
 test('Test channel guesser', () => {
+  // PhoneSimple
   expect(guessChannel(['345678890'])).toEqual('PhoneSimple')
   expect(guessChannel(['customField','345678890'])).toEqual('PhoneSimple')
+  expect(guessChannel(['PhoneSimple', '345678890'])).toEqual('Mixed')
+  expect(guessChannel(['PhoneSimple', 'customField','345678890'])).toEqual('Mixed')
 
+  // PhoneFull
   expect(guessChannel(['Name','FirstSurname','SecondSurname','345 678 890'])).toEqual('PhoneFull')
-  expect(guessChannel(['customField','Name','FirstSurname','SecondSurname','345 678 890']))
-    .toEqual('PhoneFull')
+  expect(guessChannel(['customField','Name','FirstSurname','SecondSurname','345 678 890'])).toEqual('PhoneFull')
+  expect(guessChannel(['PhoneFull', 'Name','FirstSurname','SecondSurname','345 678 890'])).toEqual('Mixed')
+  expect(guessChannel(['PhoneFull', 'customField','Name','FirstSurname','SecondSurname','345 678 890'])).toEqual('Mixed')
 
-  expect(guessChannel(['Name', 'FirstSurname', 'SecondSurname', 'MyStreet', '15', '01000', '01']))
-    .toEqual('Postal')
-  expect(guessChannel(['customField','Name', 'FirstSurname', 'SecondSurname', 'MyStreet', '15', '01000', '01']))
-    .toEqual('Postal')
+  // Postal
+  expect(guessChannel(['Name', 'FirstSurname', 'SecondSurname', 'MyStreet', '15', '01000', '01'])).toEqual('Postal')
+  expect(guessChannel(['customField','Name', 'FirstSurname', 'SecondSurname', 'MyStreet', '15', '01000', '01'])).toEqual('Postal')
+  expect(guessChannel(['Postal', 'Name', 'FirstSurname', 'SecondSurname', 'MyStreet', '15', '01000', '01'])).toEqual('Mixed')
+  expect(guessChannel(['Postal', 'customField','Name', 'FirstSurname', 'SecondSurname', 'MyStreet', '15', '01000', '01'])).toEqual('Mixed')
 
+  // Email
   expect(guessChannel(['regularmail@listarobinson.net'])).toEqual('Email')
   expect(guessChannel(['customField','regularmail@listarobinson.net'])).toEqual('Email')
+  expect(guessChannel(['Email', 'regularmail@listarobinson.net'])).toEqual('Mixed')
+  expect(guessChannel(['Email', 'customField','regularmail@listarobinson.net'])).toEqual('Mixed')
 
   //DNI/NIF
   expect(guessChannel(['98765432A'])).toEqual('DNI_NIF_NIE')
   expect(guessChannel(['customField','98765432A'])).toEqual('DNI_NIF_NIE')
+  expect(guessChannel(['DNI_NIF_NIE', '98765432A'])).toEqual('Mixed')
+  expect(guessChannel(['DNI_NIF_NIE', 'customField','98765432A'])).toEqual('Mixed')
   //NIE
   expect(guessChannel(['X9876543A'])).toEqual('DNI_NIF_NIE')
   expect(guessChannel(['customField','X9876543A'])).toEqual('DNI_NIF_NIE')
+  expect(guessChannel(['DNI_NIF_NIE', 'X9876543A'])).toEqual('Mixed')
+  expect(guessChannel(['DNI_NIF_NIE', 'customField','X9876543A'])).toEqual('Mixed')
 })

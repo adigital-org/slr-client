@@ -187,10 +187,31 @@ async function* readCsv(file) {
 export async function countLines(file) {
   let totalLines = 0
   let state = 0
+  let pendingConts = 0
 
   for await (const chunk of blockReader(file)) {
     for (let i = 0; i < chunk.length; i++) {
       const inputType = getInputType(chunk[i])
+
+      const c = chunk[i].charCodeAt(0)
+      let isError = false
+      if (pendingConts) {
+        // Every continuation byte must start with bits 10
+        if ((c & 0xC0) !== 0x80) isError = true
+        pendingConts--
+      } else if (c & 0x80) {
+        // Multi-byte sequence detected. Check if well formed.
+        // Discard the first 1, and get the next 4 bits
+        let prefix = (c & 0x78) >> 3 
+        if (prefix < 8 || prefix === 15) {
+          // Not allowed at a multi-byte seq start
+          isError = true 
+        } else {
+          // Calc how many continuation bytes should follow after this one
+          pendingConts = prefix < 12 ? 1 : prefix < 14 ? 2 : 3
+        }
+      }
+      if (isError) throw new Error('Malformed UTF8 at line: ' + (totalLines + 1))
 
       const nextState = transitionTable[state][inputType]
       const action = actionTable[state][inputType]

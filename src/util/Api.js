@@ -1,8 +1,8 @@
 import sign from './Signing'
 
 export const call = (endpoint, credentials, Config, body, agent = null) => {
-  let url = Config.apiBaseUrl + endpoint
-  const opts = body ? {body, method: 'POST'} : {}
+  let url = `${Config.apiProtocol}://${Config.apiDomain}${Config.apiBaseUrl}${endpoint}`
+  const opts = body !== undefined ? {body, method: 'POST'} : {}
 
   const queryString = sign(url, opts, credentials, Config)
   // "agent" allows to some implementations to pass to fetch a http agent to,
