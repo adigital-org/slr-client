@@ -2,7 +2,7 @@
   Defaults for SLR-Client
  */
 
-const hashesPerRequest = 20 // As SLR API documentation indicates
+const hashesPerRequest = 60 // As SLR API documentation indicates
 const maxRps = window.electronFs ? 2000 : 1000
 const autoParallel = Math.ceil(maxRps/hashesPerRequest) // Math.ceil prevents autoParallel === 0
 const maxParallel = autoParallel < 50 ? autoParallel : 50 // Prevent too many threads
