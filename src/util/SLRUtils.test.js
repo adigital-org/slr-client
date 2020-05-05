@@ -214,6 +214,13 @@ test('Test record to hash conversion', () => {
   //NIE
   expect(record2hash({fields: ['X9876543A'], channel: 'DNI_NIF_NIE'}))
     .toEqual('0581aca5a93de562091691b42e6f84afc7e29e8d9a3d61e4535939788221678d')
+
+  //Error handling
+  expect(record2hash(null)).toEqual(null)
+  expect(record2hash()).toEqual(null)
+  expect(record2hash({nofields: [], channel: 'DNI_NIF_NIE'})).toEqual(null)
+  expect(record2hash({fields: [], channel: 'fake_channel'})).toEqual(null)
+  expect(record2hash({fields: [], noChannel: 'DNI_NIF_NIE'})).toEqual(null)
 })
 
 test('Test channel guesser', () => {

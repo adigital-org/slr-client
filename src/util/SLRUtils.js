@@ -161,14 +161,18 @@ export const sanitize = (fields, channel) => {
  * Expect as input a json with the record values: channel and fields.
  */
 export const record2hash = (recordValues) => {
-  const { channel, fields } = recordValues
-  const { id, types } = channels[channel]
-  // Process each field with the corresponding channel rules. Report if normalized record is empty
-  const filtered = fields.map((val, i) => normalizers[types[i]](val)).join('')
-  if (filtered.length === 0 || filtered === defaultCountryCode)
-    console.warn(`Warning: empty record after normalization. Original: "${fields}". Normalized for channel ${channel}: "${filtered}".`)
-  const query = id + filtered
-  return SHA256(query).toString()
+  try {
+    const {channel, fields} = recordValues
+    const {id, types} = channels[channel]
+    // Process each field with the corresponding channel rules. Report if normalized record is empty
+    const filtered = fields.map((val, i) => normalizers[types[i]](val)).join('')
+    if (filtered.length === 0 || filtered === defaultCountryCode)
+      console.warn(`Warning: empty record after normalization. Original: "${fields}". Normalized for channel ${channel}: "${filtered}".`)
+    const query = id + filtered
+    return SHA256(query).toString()
+  } catch {
+    return null
+  }
 }
 
 /**
