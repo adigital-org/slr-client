@@ -2,10 +2,10 @@ export async function* blockReader(file, chunkSize = 20 * 4096) {
   let lastByte = 0
   const readSlice = (start, end) => new Promise((resolve, reject) => {
     const fr = new FileReader()
-    fr.onload = (evt) => resolve(evt.target.result)
+    fr.onload = (evt) => resolve(new Uint8Array(evt.target.result))
     fr.onerror = reject
     const blob = file.slice(lastByte, lastByte + chunkSize)
-    fr.readAsBinaryString(blob)
+    fr.readAsArrayBuffer(blob)
   })
   while (lastByte < file.size) {
     yield readSlice(lastByte, lastByte + chunkSize)
@@ -20,20 +20,20 @@ function utf8converter(bytes) {
 
   let string = ""
   while (ix < bytes.length) {
-    const byte1 = bytes[ix].charCodeAt(0)
+    const byte1 = bytes[ix]
     if (byte1 < 0x80) {
       string += String.fromCharCode(byte1)
     } else if (byte1 >= 0xC2 && byte1 < 0xE0) {
-      const byte2 = bytes[++ix].charCodeAt(0);
+      const byte2 = bytes[++ix]
       string += String.fromCharCode(((byte1 & 0x1F) << 6) + (byte2 & 0x3F))
     } else if (byte1 >= 0xE0 && byte1 < 0xF0) {
-      const byte2 = bytes[++ix].charCodeAt(0)
-      const byte3 = bytes[++ix].charCodeAt(0)
+      const byte2 = bytes[++ix]
+      const byte3 = bytes[++ix]
       string += String.fromCharCode(((byte1 & 0xFF) << 12) + ((byte2 & 0x3F) << 6) + (byte3 & 0x3F))
     } else if (byte1 >= 0xF0 && byte1 < 0xF5) {
-      const byte2 = bytes[++ix].charCodeAt(0)
-      const byte3 = bytes[++ix].charCodeAt(0)
-      const byte4 = bytes[++ix].charCodeAt(0)
+      const byte2 = bytes[++ix]
+      const byte3 = bytes[++ix]
+      const byte4 = bytes[++ix]
       let codepoint = ((byte1 & 0x07) << 18) + ((byte2 & 0x3F) << 12) + ((byte3 & 0x3F) << 6) + (byte4 & 0x3F)
       codepoint -= 0x10000
       string += String.fromCharCode((codepoint >> 10) + 0xD800, (codepoint & 0x3FF) + 0xDC00)
@@ -117,12 +117,12 @@ const actionTable = [
 
 const getInputType = (char) => {
   switch (char) {
-    case '\n':
-    case '\r':
+    case '\n'.charCodeAt():
+    case '\r'.charCodeAt():
       return 0
-    case ',':
+    case ','.charCodeAt():
       return 1
-    case '"':
+    case '"'.charCodeAt():
       return 2
     default:
       return 3
@@ -131,7 +131,7 @@ const getInputType = (char) => {
 
 async function* readCsv(file) {
   let currentLine = {fields: [], quoted: []}
-  let currentField = ''
+  let currentField = []
   let quotedField = false
   let state = 0
 
@@ -153,19 +153,19 @@ async function* readCsv(file) {
           if (inputType === 2) quotedField = true
           break;
         case 1:
-          currentField += letter
+          currentField.push(letter)
           break
         case 2:
           currentLine.fields.push(utf8converter(currentField))
           currentLine.quoted.push(quotedField)
-          currentField = ''
+          currentField = []
           quotedField = false
           break
         case 3:
           currentLine.fields.push(utf8converter(currentField))
           currentLine.quoted.push(quotedField)
           yield currentLine
-          currentField = ''
+          currentField = []
           quotedField = false
           currentLine = {fields: [], quoted: []}
           break
@@ -193,7 +193,7 @@ export async function countLines(file) {
     for (let i = 0; i < chunk.length; i++) {
       const inputType = getInputType(chunk[i])
 
-      const c = chunk[i].charCodeAt(0)
+      const c = chunk[i]
       let isError = false
       if (pendingConts) {
         // Every continuation byte must start with bits 10

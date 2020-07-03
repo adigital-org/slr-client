@@ -3,20 +3,24 @@
  */
 
 import * as nodeFs from 'fs'
+import { basename } from 'path'
 
 export default class File {
-  constructor(fileParts, fileName, filePath) {
+  constructor(fileParts, filePath) {
+    const fs = window.electronFs ? window.electronFs : nodeFs
+    const bName = window.basename ? window.basename : basename
+
     try {
-      const fullPath = filePath + '/' + fileName
-      const stats = nodeFs.statSync(fullPath)
+      const fullPath = filePath
+      const stats = fs.statSync(fullPath)
       this.size = stats.size
       this.end = this.size
       this.lastModified = Math.floor(stats.mtimeMs)
-      this.name = fileName
+      this.name = bName(filePath)
       this.path = fullPath
       this.start = 0
     } catch (e) {
-      throw new Error('File not found.')
+      throw new Error(`File "${filePath}" not found.`)
     }
   }
 
@@ -26,7 +30,7 @@ export default class File {
       this.end = (end > this.size) ? this.size : end
       return this
     } else {
-      throw new Error(`Out of file limits. File size: ${this.size}, slice start: ${start}, slice end: ${end}`)
+      throw new Error(`Out of file limits. File size: ${this.size}, slice start: ${start}, slice end: ${end}.`)
     }
   }
 }

@@ -2,6 +2,7 @@ import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import {FormattedMessage, FormattedNumber, injectIntl} from 'react-intl'
 import { connect } from 'react-redux'
+import IntegrityChecker from '../util/IntegrityChecker'
 import ProgressBar from './ProgressBar'
 import Spinner from "./Spinner";
 import { clearSession } from '../store/actions/requests'
@@ -76,12 +77,28 @@ class Progress extends Component {
   }
   handleDownload = (success) => {
     const type = success ? 'success' : 'fail'
-
-    const downloading = this.props.results[type].save()
+    this.setState({downloading: true})
     document.activeElement.blur()
 
-    this.setState({downloading: true})
+    if (this.props.stats.totalRecords !==
+      this.props.results.success.totalRecords + this.props.results.fail.totalRecords) {
+      window.alert(this.props.intl.formatMessage({
+        id: 'progress.error.processed.mismatch'
+      }))
+    }
+
+    // Electron is not compatible with post-save integrity checks: bypass them with a fake promise.
+    const downloading = this.props.results[type].save(
+      new IntegrityChecker(this.props.results[type].totalRecords)
+    )
     downloading.then(() => this.downloadDone(type))
+      .catch((e) => {
+        window.alert(this.props.intl.formatMessage({
+          id: 'progress.error.saving.mismatch'
+        }))
+        console.error(e)
+        this.downloadDone(type)
+      })
   }
   handleDownloadSuccess = () => {this.handleDownload(true)}
   handleDownloadFail = () => {this.handleDownload(false)}

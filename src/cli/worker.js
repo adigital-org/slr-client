@@ -5,6 +5,9 @@
 import { startRequests } from "../util/Requester"
 import cluster from 'cluster'
 import https from 'https'
+import http from 'http'
+import httpsProxyAgent from 'https-proxy-agent'
+import httpProxyAgent from 'http-proxy-agent'
 import HugeFile from '../util/HugeFile'
 
 let agent = null
@@ -32,12 +35,16 @@ const work = (task) => {
     task.credentials,
     lineGenerator(task.lines),
     (status) => progress(task.id, status),
-    (task.config.useKeepAlive) ? agent: null
+    agent
   ).catch((e) => {throw new Error(e)})
 }
 
-const setupWorker = () => {
-  agent = new https.Agent({keepAlive: true})
+const setupWorker = (protocol, proxy) => {
+  // If HTTP/S proxy is required, use http/s-proxy-agent module,
+  // otherwise use NodeJS native HTTP/S agent.
+  if (protocol === 'http') agent = proxy ? new httpProxyAgent(proxy) : new http.Agent({keepAlive: true})
+  else agent = proxy ? new httpsProxyAgent(proxy) : new https.Agent({keepAlive: true})
+
   process.on('message', (task) => {
     if (task.totalRecords === 0) process.exit(0)
     work(task)

@@ -1,6 +1,6 @@
 {
   "name": "slr-client",
-  "version": "3.3.3",
+  "version": "3.8.2",
   "private": true,
   "description": "Client for Lista Robinson Service",
   "author": "Adigital",
@@ -11,7 +11,12 @@
     "icon": "build/1024x1024.png",
     "artifactName": "${productName}[${os}_${arch}].${ext}",
     "win": {
-      "target": [ "nsis:ia32", "nsis:x64", "portable:ia32", "portable:x64" ]
+      "target": [
+        "nsis:ia32",
+        "nsis:x64",
+        "portable:ia32",
+        "portable:x64"
+      ]
     },
     "nsis": {
       "artifactName": "${productName}[${os}_${arch}-installer].${ext}"
@@ -20,7 +25,12 @@
       "artifactName": "${productName}[${os}_${arch}-portable].${ext}"
     },
     "linux": {
-      "target": [ "AppImage:x64", "AppImage:ia32", "tar.gz:x64", "tar.gz:ia32" ]
+      "target": [
+        "AppImage:x64",
+        "AppImage:ia32",
+        "tar.gz:x64",
+        "tar.gz:ia32"
+      ]
     },
     "mac": {
       "target": "zip"
@@ -30,7 +40,10 @@
     "crypto-js": "^3.1.9-1",
     "electron-is-dev": "^1.1.0",
     "file-saver": "^2.0.0",
+    "http-proxy-agent": "^4.0.1",
+    "https-proxy-agent": "^5.0.0",
     "markdown-to-jsx": "^6.9.4",
+    "node-fetch": "^2.6.0",
     "node-sass": "^4.12.0",
     "react": "^16.6.1",
     "react-dom": "^16.6.1",
@@ -40,18 +53,17 @@
     "react-scripts": "2.1.1",
     "redux": "^4.0.1",
     "redux-thunk": "^2.3.0",
-    "rewire": "^4.0.1",
-    "node-fetch": "^2.6.0"
+    "rewire": "^4.0.1"
   },
   "devDependencies": {
+    "@rollup/plugin-commonjs": "^11.0.0",
+    "@rollup/plugin-json": "^4.0.1",
+    "@rollup/plugin-node-resolve": "^6.0.0",
     "electron": "^7.0.1",
     "electron-builder": "^22.1.0",
-    "rollup": "^1.27.14",
-    "@rollup/plugin-commonjs": "^11.0.0",
-    "@rollup/plugin-node-resolve": "^6.0.0",
-    "@rollup/plugin-json": "^4.0.1",
+    "esm": "^3.2.25",
     "pkg": "^4.4.2",
-    "esm": "^3.2.25"
+    "rollup": "^1.27.14"
   },
   "scripts": {
     "start": "react-scripts start",

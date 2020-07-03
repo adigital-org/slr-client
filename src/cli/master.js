@@ -11,8 +11,9 @@ import config from './config.cli'
 import ConsolidatedProgress from '../util/cli/ConsolidatedProgress'
 import Report from '../util/cli/Report'
 import packageJson from '../../package.json'
+import IntegrityChecker from "../util/IntegrityChecker";
 
-let lineGenerator, success, fail, consolidatedProgress, report, reportTimer
+let lineGenerator, success, fail, consolidatedProgress, report, reportTimer, status
 let tasks = 0
 const workerParams = {
   id: null,
@@ -35,8 +36,8 @@ const workerReport = (workerMsg) => {
       break
     case 'session/done':
       consolidatedProgress.setStats(workerMsg.taskId, payload.stats)
-      success.set(payload.results.success.plain)
-      fail.set(payload.results.fail.plain)
+      success.set(payload.results.success.plain, payload.stats.found + payload.stats.notFound)
+      fail.set(payload.results.fail.plain, payload.stats.error)
 
       if (payload.stats.error > 0) {
         report.printError(`WARNING: Got ${payload.stats.error} error(s). Reducing concurrency.`)
@@ -68,21 +69,32 @@ const requestLines = async (lineGenerator, numberOfLines) => {
   return lines
 }
 
-const finishFiles = async () => {
-  if (success) {
-    await success.save(params.outputFolder)
-    success.delete()
-  }
-  if (fail) {
-    await fail.save(params.outputFolder)
-    fail.delete()
+const finishFile = async (hugeFile) => {
+  try {
+    await hugeFile.save(new IntegrityChecker(hugeFile.totalRecords), params.outputFolder)
+    hugeFile.delete()
+    return true
+  } catch (e) {
+    report.printError(`ERROR: error saving "${hugeFile.taggedFileName}" file: ${e}`)
+    return false
   }
 }
+
 const finish = async (code, errMsg) => {
   try {
-    clearInterval(reportTimer)
+    status = 'saving-and-verifying-output'
+    if (params.totalRecords !== success.totalRecords + fail.totalRecords && code === 0) {
+      code = 7
+      report.printError(
+        `ERROR: the number of processed records does not match the detected ones. Check output files and log.`
+      )
+    }
     if (errMsg) process.stderr.write(errMsg + '\n')
-    if (success || fail) await finishFiles()
+
+    if (success) if (!await finishFile(success) && code === 0) code = 6
+    if (fail) if (!await finishFile(fail) && code === 0) code = 6
+
+    clearInterval(reportTimer)
     report.printEnd(code)
     process.exit(code)
   } catch(e) {
@@ -126,7 +138,9 @@ const setupMaster = async () => {
   workerParams.config = config
 
   consolidatedProgress = new ConsolidatedProgress(params.totalRecords)
+  status = 'initializing'
   report = new Report(consolidatedProgress, params.checkUpdates, config.latestVersionCheckUrl, packageJson.version)
+  reportTimer = setInterval(() => report.printProgress(status), config.workingUiUpdateInterval)
 
   try { params.totalRecords = await countLines(params.inputCsv) }
   catch(e) { await finish(3, e.message) }
@@ -147,7 +161,8 @@ const setupMaster = async () => {
   fail = new HugeFile(params.inputCsv.name, '_slr-client-error_', 0, fs, params.outputFolder)
 
   //Create workers and send tasks
-  for (let i = 0; i < params.coresToUse; i++) workers.push(cluster.fork())
+  for (let i = 0; i < params.coresToUse; i++)
+    workers.push(cluster.fork({proxy: params.proxy, protocol: config.apiProtocol}))
   for (let w of workers) {
     await taskToWorker(w, workerParams, params.linesPerTask)
       .catch((e) => finish(4, 'Fatal error feeding worker for the first time: ' + e))
@@ -156,7 +171,7 @@ const setupMaster = async () => {
     })
   }
 
-  reportTimer = setInterval(() => report.printProgress('working'), config.workingUiUpdateInterval)
+  status = 'working'
 }
 
 export default setupMaster

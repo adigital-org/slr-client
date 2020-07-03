@@ -2,7 +2,6 @@
   SLR-Client CLI arguments parser
  */
 
-import { basename, dirname } from 'path'
 import { channels, mixedRecord } from '../util/SLRUtils'
 import clientDefaultConfig from '../config'
 import packageJson from '../../package.json'
@@ -22,7 +21,8 @@ const params = {
   cliMaxRps: 6000,
   coresToUse: cpus().length,
   checkUpdates: true,
-  customApi: null
+  customApi: null,
+  proxy: process.env.https_proxy || undefined
 }
 
 const channelOptions = [...Object.keys(channels), mixedRecord]
@@ -31,7 +31,7 @@ const help = [
   ['Usage:'],
   ['  Required params: inputCsv=/path/to/file.csv outputFolder=/path/to/output/folder/ channel=ChannelName key=AKIAX...X secret=xx...xx'],
   ['  Channel options: ' + channelOptions.join(',')],
-  ['  ADVANCED params: linesPerTask=(number) maxRps=(number) maxCoresToUse=(number) customApi=(url) disableCheckUpdates'],
+  ['  ADVANCED params: linesPerTask=(number) maxRps=(number) maxCoresToUse=(number) customApi=(url[:port]) proxy=(url:port) disableCheckUpdates'],
   ['Documentation, updates and source code: ' + clientDefaultConfig.slrClientDistUrl],
   [`${packageJson.name} for servers v.${packageJson.version} by ${packageJson.author}\n`]
 ]
@@ -76,7 +76,7 @@ for (const arg of args) {
         if (value.length > 0) params.secret = value
         break
       case 'inputCsv':
-        if (value.length > 0) params.inputCsv = new File([], basename(value), dirname(value))
+        if (value.length > 0) params.inputCsv = new File([], value)
         break
       case 'outputFolder':
         if (value.length > 0) params.outputFolder = value
@@ -97,7 +97,10 @@ for (const arg of args) {
         params.checkUpdates = false
         break
       case "customApi":
-        params.customApi = value
+        if (value.length > 0) params.customApi = value
+        break
+      case "proxy":
+        if (value.length > 0) params.proxy = value
         break
       default:
         err(`ERROR: unknown argument '${type}'`)

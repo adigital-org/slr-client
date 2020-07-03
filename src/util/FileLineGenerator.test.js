@@ -15,8 +15,15 @@ test('Block file reader reads correctly', async () => {
   const file = new File([fileContents], 'demo.csv')
   const reader = blockReader(file, 7)
 
-  expect((await reader.next()).value).toEqual('a,b,c,d')
-  expect((await reader.next()).value).toEqual('\n"a","b')
+  function strToUint8Array(str) {
+    const arrBuff = new ArrayBuffer(str.length)
+    const arrView = new Uint8Array(arrBuff)
+    for (let i = 0; i<str.length; i++) arrView[i] = str[i].charCodeAt(0)
+    return arrView
+  }
+
+  expect((await reader.next()).value).toEqual(strToUint8Array('a,b,c,d'))
+  expect((await reader.next()).value).toEqual(strToUint8Array('\n"a","b'))
 })
 
 test('CSV is parsed as expected', async () => {

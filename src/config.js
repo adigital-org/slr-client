@@ -14,7 +14,7 @@ const config = {
   messages: {
     "appSlrHomeUrl": "https://www.listarobinson.es",
     "appSlrGetKeysUrl": "/enterprise/subscription-method",
-    "appEnterpriseContactEmail": "info@listarobinson.es",
+    "appEnterpriseContactEmail": "empresas@listarobinson.es",
     "appVersion": process.env.REACT_APP_VERSION,
     "githubRepoUrl": "https://github.com/adigital-org/slr-client",
     "binChecksum": distUrl + "/dist/checksum.txt",
@@ -36,7 +36,7 @@ const config = {
 
   slrClientDistUrl: distUrl,
 
-  apiProtocol: "https",
+  apiProtocol: "https", //'https' or 'http'
   apiDomain: "api.listarobinson.es",
   apiBaseUrl: "/v1/api/",
 
@@ -45,8 +45,6 @@ const config = {
   //'true' to send AWS signature in headers, 'false' to send it in query string
   //AWS signature in headers may require CORS preflight
   apiAuthHeaders: false,
-
-  useKeepAlive: true, // CLI mode: if false, enables http protocol. DO NOT DISABLE FOR PRODUCTION ENV. ONLY FOR TESTING.
 
   latestVersionCheckUrl: distUrl + "/index.html",
 

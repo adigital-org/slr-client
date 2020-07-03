@@ -69,6 +69,8 @@ class FilePicker extends Component {
   }
 
   preselectFile(file) {
+    if (window.electronFs) file = new File([], file.path)
+
     const ext = file.name.split(".").slice(-1)[0].toLowerCase()
     if (!Config.supportedExtensions.includes(ext)) return this.setState({error: true})
 

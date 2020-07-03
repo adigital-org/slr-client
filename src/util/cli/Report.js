@@ -45,6 +45,8 @@ export default class Report {
     if (reason === 0) this.printProgress('done')
     else if (reason === 1) this.printProgress('user-cancel')
     else if (reason === 3) this.printProgress('error-reading-file')
+    else if (reason === 6) this.printProgress('error-saving-output-files')
+    else if (reason === 7) this.printProgress('error-unprocessed-records')
     else this.printProgress('fatal-sys-error')
   }
 
