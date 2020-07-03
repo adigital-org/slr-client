@@ -156,8 +156,8 @@ export const startRequests = async (hugeFiles, channel, totalRecords, Config, cr
   reportProgress()
 
   // Requests done.
-  status.results.success.done(stats.found + stats.notFound)
-  status.results.fail.done(stats.error)
+  status.results.success.done()
+  status.results.fail.done()
 
   // Set status done
   reportStatus({ type: 'session/done', payload: status })

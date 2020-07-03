@@ -17,7 +17,7 @@
   "login.message": "Para acceder al servicio, indica tus datos API a continuación:",
   "login.remember-me": "Recordar sesión en este navegador",
   "login.remember-pass": "Contraseña de sesión:",
-  "login.unlock.descr": "Paca acceder con las credenciales guardadas en este navegador, introduce la contraseña",
+  "login.unlock.descr": "Para acceder con las credenciales guardadas en este navegador, introduce la contraseña",
   "login.unlock.forget": "Cerrar sesión de Cliente API",
   "login.unlock.forget-confirm": "¿Seguro que deseas olvidar las credenciales guardadas?",
   "login.unlock.pass": "Contraseña de sesión:",
@@ -62,6 +62,8 @@
   "progress.reset": "Consultar otro fichero",
   "progress.reset.success.pending": "Todavía no has guardado los resultados de la actual consulta. Si vas a consultar otro fichero, se perderán los resultados actuales. ¿Seguro que deseas consultar ya otro fichero?",
   "progress.reset.fail.pending": "Todavía no has guardado los errores de la actual consulta. Si vas a consultar otro fichero, se perderán los resultados actuales. ¿Seguro que deseas consultar ya otro fichero?",
+  "progress.error.processed.mismatch": "ERROR: el número de registros procesados no coincide con el de registros en el fichero de entrada. Comprueba los archivos descargados.",
+  "progress.error.saving.mismatch": "ERROR: el archivo no se ha guardado correctamente, podrían faltar registros.",
   "progress.cancel": "Cancelar",
   "progress.cancel.msg": "Si cancelas el proceso, se perderán los resultados ya consultados pero su consulta se habrá contabilizado igualmente. ¿Seguro que quieres cancelar?",
   "progress.title": "Procesando fichero",
@@ -70,5 +72,5 @@
   "progress.download.fail": "Guardar errores",
   "progress.download.tags.success": "_depurados-slr_",
   "progress.download.tags.fail": "_consultas-fallidas_",
-  "progress.download.downloading": "El fichero se guardará en unos segundos..."
+  "progress.download.downloading": "Comprobando y guardando los resultados..."
 }

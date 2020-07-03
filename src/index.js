@@ -16,6 +16,13 @@ import App from './components/App'
 import * as serviceWorker from './serviceWorker'
 import './style/index.sass'
 
+import nodeFile from './util/cli/File'
+import nodeFileReader from './util/cli/FileReader'
+if (window.electronFs) {
+  window.File = nodeFile
+  window.FileReader = nodeFileReader
+}
+
 // Determine lang to use
 const browserLang = document.documentElement.lang ||
   window.navigator.language || window.navigator.userLanguage

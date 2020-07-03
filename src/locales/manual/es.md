@@ -302,6 +302,7 @@ El campo "_status_" puede contener los siguientes valores:
 
 - _error-reading-file_: cuando el proceso de consulta no se ha podido iniciar por un error en la lectura del fichero. Este error puede producirse si el fichero no tiene una codificación UTF-8 correcta. En la salida _stderr_ se mostrarán más detalles sobre el error.
 - _working_: el proceso de consulta se está ejecutando.
+- _saving-and-verifying-output_: el proceso de consulta ha finalizado y los resultados se están guardando y comprobando.
 - _user-cancel_: el proceso de consulta ha sido detenido por el usuario (ej.: ctrl+c)
 - _fatal-sys-error_: el proceso de consulta se ha detenido por un error del sistema.
 - _done_: el proceso de consulta ha finalizado.
@@ -337,12 +338,17 @@ Si no se produjo ningún error, el fichero de errores estará vacío.
 
 _NOTA: no se recomienda modificar estos parámetros salvo que sea necesario._
 
-El Cliente API para servidor admite los siguientes parámetros avanzados:
+El Cliente API para servidor admite los siguientes parámetros avanzados ***opcionales***:
 
 1. _maxRps_: número máximo de registros por segundo consultados. Un mayor número implicará un mayor consumo de recursos, aunque el proceso tardará menos. Por defecto, el Cliente API para servidor tratará de consultar a 2000 registros por segundo y la velocidad máxima configurable es de 6000.
 2. _maxCoresToUse_: número máximo de núcleos de la CPU a utilizar. Cuantos más núcleos en uso, más memoria RAM se requerirá. Por defecto, el Cliente API para servidor tratará de utilizar el número máximo de núcleos disponibles.
 3. _linesPerTask_: número de registros que se mantendrán en memoria por cada núcleo. Cuanto más alta sea esta cifra, mayor será el consumo de RAM, aunque puede favorecer la velocidad de consulta. Por defecto, este valor es de 40000.
 4. _disableCheckUpdates_: desactiva las comprobaciones de actualizaciones del Cliente API para servidor.
 5. _customApi_: URL de API del Servicio de Lista Robinson personalizada. Debe indicarse sólo el dominio, sin el protocolo ni la ruta. Puede especificarse un puerto distinto del predeterminado utilizando ":".
+6. _proxy_: URL de un proxy HTTPS a utilizar. Debe indicarse el dominio, el protocolo y el puerto. Por ejemplo: "http://myproxy.com:8888". Este parámetro prevalece sobre la variable de entorno "*https_proxy*".
 
 Si tu sistema tiene poca memoria RAM o si el sistema operativo corta el proceso del Cliente API para servidor por falta de memoria RAM libre, puedes reducir _linesPerTask_ o _maxCoresToUse_ para reducir el uso de memoria.
+
+### 5.5 Proxy
+
+El Cliente API puede conectarse a la API del Servicio de Lista Robinson a través de un proxy HTTP si se define su URL en la variable de entorno "*https_proxy*" o si se utiliza el parámetro "_proxy_" arriba descrito. En todo caso, es preciso indicar el protocolo, dominio y puerto a utilizar.

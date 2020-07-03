@@ -11,7 +11,7 @@
   $GLOBALS['ERROR_PROB'] = 5; //0 to 100 (%). Default 10.
   $GLOBALS['ERROR_PROB_429'] = 25; //0 to 100 (%). Default 25.
 
-  $GLOBALS['MAX_HASHES_PER_REQUEST'] = 20;
+  $GLOBALS['MAX_HASHES_PER_REQUEST'] = 60;
   $GLOBALS['SECRET'] = '85e6959915cc2d88b23b9f13c03f3b2b7d498db444a06d8a94a695c4e01e3228';
   $GLOBALS['SECTORS'] = ['1','2','3','4','5','6','7','8','9'];
 
@@ -30,7 +30,10 @@
       header('Access-Control-Allow-Credentials: true');
     }
     //Set error
-    if ($setError) error_log('Client error '.$httpStatus.': '.$response['message']);
+    if ($setError) error_log(
+      'SimpleApiSimulator-Log: Client error '.
+      $httpStatus.': '.$response['message']
+    );
     //Set response code and body
     http_response_code($httpStatus);
     print(json_encode($response));

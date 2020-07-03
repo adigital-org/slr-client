@@ -10,5 +10,5 @@ import cluster from 'cluster'
 if (cluster.isMaster) {
   setupMaster().catch((e) => {throw new Error("Fatal error: " + e)})
 } else if (cluster.isWorker) {
-  setupWorker()
+  setupWorker(process.env.protocol, process.env.proxy)
 } else throw new Error('Unknown process type')
