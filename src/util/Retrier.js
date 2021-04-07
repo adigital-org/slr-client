@@ -15,6 +15,7 @@ const retrier = (config, callback) => {
     return callback()
       .catch(err => {
         remaining-- // Consumed one already
+        console.error(`ERROR: ${err.message}. ${remaining} tries remaining.`)
         if (remaining > 0) {
           // We need to try again.
           const ms = (err && err.wait) ? delay : 0
